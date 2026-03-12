@@ -59,8 +59,8 @@ services:
 
   nginx:
     image: nginx:1.25-alpine
-    ports:
-      - "80:80"
+    expose:
+      - "80"
     command:
       - /bin/sh
       - -c
