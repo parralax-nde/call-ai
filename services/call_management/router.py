@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
 from shared.auth import get_current_user
@@ -32,6 +32,7 @@ def create_call_log(
 
 @router.get("/logs", response_model=list[CallLogResponse])
 def search_call_logs(
+    response: Response,
     skip: int = 0,
     limit: int = 20,
     status: str | None = None,
@@ -52,7 +53,8 @@ def search_call_logs(
         date_to=date_to,
         ai_prompt_id=ai_prompt_id,
     )
-    logs, _total = CallManagementService.search_call_logs(db, params, skip, limit)
+    logs, total = CallManagementService.search_call_logs(db, params, skip, limit)
+    response.headers["X-Total-Count"] = str(total)
     return [CallLogResponse.model_validate(log) for log in logs]
 
 

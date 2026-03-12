@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from shared.auth import get_current_user
 from shared.database import get_db
+from shared.exceptions import NotFoundException
 
 from .schemas import (
     ExecuteTriggerRequest,
@@ -165,6 +166,8 @@ def fire_trigger(
     trigger_id: int,
     data: ExecuteTriggerRequest,
     db: Session = Depends(get_db),
-) -> ScheduledCallResponse | None:
+) -> ScheduledCallResponse:
     call = SchedulerService.fire_trigger(db, trigger_id, data.event_data)
-    return ScheduledCallResponse.model_validate(call) if call else None
+    if not call:
+        raise NotFoundException(detail="Trigger not found or inactive")
+    return ScheduledCallResponse.model_validate(call)
