@@ -116,6 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageTitles = {
         dashboard: 'Overview',
         calls: 'Phone Lists',
+        contacts: 'Contacts',
         'ai-config': 'Sessions',
         scheduler: 'Launch Plan',
         settings: 'Workspace',
@@ -159,6 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
         switch (page) {
             case 'dashboard': loadDashboard(); break;
             case 'calls': loadCalls(); break;
+            case 'contacts': loadContactsPage(); break;
             case 'ai-config': loadPrompts(); loadPersonas(); break;
             case 'scheduler': loadScheduledCalls(); break;
             case 'settings': loadSettings(); break;
@@ -196,6 +198,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    function renderTags(tags) {
+        if (!tags || tags.length === 0) return '<span class="tag-chip muted">none</span>';
+        return tags.map((tag) => `<span class="tag-chip">${escapeHtml(tag)}</span>`).join(' ');
     }
 
     function startButtonLoading(button, loadingText = 'Loading...') {
@@ -325,6 +332,108 @@ document.addEventListener('DOMContentLoaded', () => {
             errorEl.textContent = err.message;
         } finally {
             stopLoading();
+        }
+    });
+
+    // =====================
+    // Contacts
+    // =====================
+    let contactsCache = [];
+
+    async function loadContactsPage() {
+        try {
+            const contacts = await API.getContacts();
+            contactsCache = contacts || [];
+            const tbody = $('#contacts-table-body');
+            if (contactsCache.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No contacts yet. Add your first one.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = contactsCache.map((c) => `
+                <tr>
+                    <td>${escapeHtml(c.full_name)}</td>
+                    <td>${escapeHtml(c.phone_number)}</td>
+                    <td>${escapeHtml(c.email || '-')}</td>
+                    <td>${renderTags(c.tags || [])}</td>
+                    <td>${formatDate(c.created_at)}</td>
+                    <td>
+                        <button class="btn-icon edit-contact-btn" title="Edit" data-id="${c.id}">✏️</button>
+                        <button class="btn-icon delete-contact-btn" title="Delete" data-id="${c.id}">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch {
+            $('#contacts-table-body').innerHTML = '<tr><td colspan="6" class="empty-state">Failed to load contacts.</td></tr>';
+        }
+    }
+
+    $('#new-contact-btn').addEventListener('click', () => {
+        $('#contact-modal-title').textContent = 'Add Contact';
+        $('#contact-edit-id').value = '';
+        $('#contact-form').reset();
+        $('#contact-modal').classList.remove('hidden');
+    });
+
+    setupModalClose('#contact-modal');
+
+    $('#contact-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const stopLoading = startButtonLoading(e.submitter || $('#contact-form button[type="submit"]'), 'Saving...');
+        const errorEl = $('#contact-error');
+        errorEl.textContent = '';
+        const editId = $('#contact-edit-id').value;
+        const payload = {
+            full_name: $('#contact-name').value,
+            phone_number: $('#contact-phone').value,
+            email: $('#contact-email').value || null,
+            notes: $('#contact-notes').value || null,
+            tags: ($('#contact-tags').value || '')
+                .split(',')
+                .map((t) => t.trim())
+                .filter(Boolean),
+        };
+        try {
+            if (editId) {
+                await API.updateContact(editId, payload);
+            } else {
+                await API.createContact(payload);
+            }
+            $('#contact-modal').classList.add('hidden');
+            loadContactsPage();
+        } catch (err) {
+            errorEl.textContent = err.message;
+        } finally {
+            stopLoading();
+        }
+    });
+
+    $('#contacts-table-body').addEventListener('click', async (e) => {
+        const editBtn = e.target.closest('.edit-contact-btn');
+        if (editBtn) {
+            const id = parseInt(editBtn.dataset.id, 10);
+            const contact = contactsCache.find((c) => c.id === id);
+            if (!contact) return;
+            $('#contact-modal-title').textContent = 'Edit Contact';
+            $('#contact-edit-id').value = String(contact.id);
+            $('#contact-name').value = contact.full_name || '';
+            $('#contact-phone').value = contact.phone_number || '';
+            $('#contact-email').value = contact.email || '';
+            $('#contact-notes').value = contact.notes || '';
+            $('#contact-tags').value = (contact.tags || []).join(', ');
+            $('#contact-modal').classList.remove('hidden');
+            return;
+        }
+
+        const deleteBtn = e.target.closest('.delete-contact-btn');
+        if (deleteBtn) {
+            const id = parseInt(deleteBtn.dataset.id, 10);
+            if (!confirm('Delete this contact?')) return;
+            try {
+                await API.deleteContact(id);
+                loadContactsPage();
+            } catch (err) {
+                alert('Failed to delete contact: ' + err.message);
+            }
         }
     });
 
@@ -633,6 +742,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Settings
     // =====================
     async function loadSettings() {
+        loadMarketplaceNumbers();
+        loadOwnedNumbers();
+
         // Load profile
         try {
             const profile = await API.getProfile();
@@ -648,6 +760,66 @@ document.addEventListener('DOMContentLoaded', () => {
         // Load API keys
         loadApiKeys();
     }
+
+    async function loadMarketplaceNumbers() {
+        const grid = $('#number-marketplace-grid');
+        const empty = $('#number-marketplace-empty');
+        try {
+            const numbers = await API.getMarketplaceNumbers();
+            if (!numbers || numbers.length === 0) {
+                grid.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+            grid.innerHTML = numbers.map((n) => `
+                <div class="number-card">
+                    <div class="number-card-phone">${escapeHtml(n.phone_number)}</div>
+                    <div class="number-card-price">$${Number(n.monthly_price_usd).toFixed(2)} / month</div>
+                    <button class="btn btn-primary btn-sm buy-number-btn" data-number="${escapeHtml(n.phone_number)}">Buy Number</button>
+                </div>
+            `).join('');
+        } catch {
+            grid.innerHTML = '<div class="empty-state">Failed to load marketplace numbers.</div>';
+            empty.classList.add('hidden');
+        }
+    }
+
+    async function loadOwnedNumbers() {
+        const tbody = $('#owned-numbers-table-body');
+        try {
+            const numbers = await API.getOwnedNumbers();
+            if (!numbers || numbers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No numbers purchased yet.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = numbers.map((n) => `
+                <tr>
+                    <td>${escapeHtml(n.phone_number)}</td>
+                    <td>$${Number(n.monthly_price_usd).toFixed(2)} / month</td>
+                    <td><span class="badge badge-scheduled">${escapeHtml(n.status)}</span></td>
+                    <td>${formatDate(n.purchased_at)}</td>
+                </tr>
+            `).join('');
+        } catch {
+            tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Failed to load owned numbers.</td></tr>';
+        }
+    }
+
+    $('#number-marketplace-grid').addEventListener('click', async (e) => {
+        const buyBtn = e.target.closest('.buy-number-btn');
+        if (!buyBtn) return;
+        const stopLoading = startButtonLoading(buyBtn, 'Purchasing...');
+        try {
+            await API.purchaseNumber(buyBtn.dataset.number);
+            await loadMarketplaceNumbers();
+            await loadOwnedNumbers();
+        } catch (err) {
+            alert('Failed to purchase number: ' + err.message);
+        } finally {
+            stopLoading();
+        }
+    });
 
     // Profile form
     let profileExists = false;

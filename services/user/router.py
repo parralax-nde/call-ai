@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -10,6 +12,12 @@ from .schemas import (
     ApiKeyCreate,
     ApiKeyCreatedResponse,
     ApiKeyResponse,
+    ContactCreate,
+    ContactResponse,
+    ContactUpdate,
+    MarketplaceNumber,
+    NumberPurchaseRequest,
+    OwnedNumberResponse,
     ProfileCreate,
     ProfileResponse,
     ProfileUpdate,
@@ -20,6 +28,29 @@ from .service import UserService
 
 router = APIRouter(prefix="/users", tags=["Users"])
 user_service = UserService()
+
+
+def _contact_response(contact: object) -> ContactResponse:
+    parsed_tags: list[str] | None = None
+    tags_value = getattr(contact, "tags", None)
+    if tags_value:
+        try:
+            parsed = json.loads(tags_value)
+            if isinstance(parsed, list):
+                parsed_tags = [str(t) for t in parsed]
+        except (TypeError, ValueError):
+            parsed_tags = []
+
+    return ContactResponse(
+        id=getattr(contact, "id"),
+        user_id=getattr(contact, "user_id"),
+        full_name=getattr(contact, "full_name"),
+        phone_number=getattr(contact, "phone_number"),
+        email=getattr(contact, "email"),
+        notes=getattr(contact, "notes"),
+        tags=parsed_tags,
+        created_at=getattr(contact, "created_at"),
+    )
 
 
 def _get_user_id(current_user: dict) -> int:
@@ -149,3 +180,77 @@ def update_settings(
     user_id = _get_user_id(current_user)
     profile = user_service.update_profile(db, user_id, data.model_dump(exclude_unset=True))
     return ProfileResponse.model_validate(profile)
+
+
+@router.get("/numbers/marketplace", response_model=list[MarketplaceNumber])
+def list_marketplace_numbers(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[MarketplaceNumber]:
+    _get_user_id(current_user)
+    items = user_service.list_marketplace_numbers(db)
+    return [MarketplaceNumber(**item) for item in items]
+
+
+@router.get("/numbers", response_model=list[OwnedNumberResponse])
+def list_owned_numbers(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[OwnedNumberResponse]:
+    user_id = _get_user_id(current_user)
+    numbers = user_service.list_owned_numbers(db, user_id)
+    return [OwnedNumberResponse.model_validate(n) for n in numbers]
+
+
+@router.post("/numbers/purchase", response_model=OwnedNumberResponse, status_code=201)
+def purchase_number(
+    data: NumberPurchaseRequest,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> OwnedNumberResponse:
+    user_id = _get_user_id(current_user)
+    number = user_service.purchase_number(db, user_id, data.phone_number)
+    return OwnedNumberResponse.model_validate(number)
+
+
+@router.post("/contacts", response_model=ContactResponse, status_code=201)
+def create_contact(
+    data: ContactCreate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ContactResponse:
+    user_id = _get_user_id(current_user)
+    contact = user_service.create_contact(db, user_id, data.model_dump())
+    return _contact_response(contact)
+
+
+@router.get("/contacts", response_model=list[ContactResponse])
+def list_contacts(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[ContactResponse]:
+    user_id = _get_user_id(current_user)
+    contacts = user_service.list_contacts(db, user_id)
+    return [_contact_response(c) for c in contacts]
+
+
+@router.put("/contacts/{contact_id}", response_model=ContactResponse)
+def update_contact(
+    contact_id: int,
+    data: ContactUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ContactResponse:
+    user_id = _get_user_id(current_user)
+    contact = user_service.update_contact(db, user_id, contact_id, data.model_dump(exclude_unset=True))
+    return _contact_response(contact)
+
+
+@router.delete("/contacts/{contact_id}", status_code=204)
+def delete_contact(
+    contact_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    user_id = _get_user_id(current_user)
+    user_service.delete_contact(db, user_id, contact_id)

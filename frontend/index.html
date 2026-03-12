@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css?v=20260312-4">
+    <link rel="stylesheet" href="/static/css/style.css?v=20260312-5">
 </head>
 <body>
     <!-- Auth Pages -->
@@ -79,6 +79,14 @@
                     </a>
                 </li>
                 <li>
+                    <a href="#" class="nav-link" data-page="contacts">
+                        <span class="nav-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M22 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <span class="nav-text">Contacts</span>
+                    </a>
+                </li>
+                <li>
                     <a href="#" class="nav-link" data-page="ai-config">
                         <span class="nav-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24" fill="none"><path d="M9 3h6l1 3h3v8h-2v4H7v-4H5V6h3l1-3Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 11h6M10 14h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -129,7 +137,7 @@
                                     <span class="workflow-index">1</span>
                                     <span class="workflow-copy">
                                         <strong>Buy Number</strong>
-                                        <small>Numbers and voice are managed from workspace .env</small>
+                                        <small>Choose a number from marketplace at $1/month</small>
                                     </span>
                                 </button>
                                 <button class="workflow-step nav-link workflow-link" data-page="ai-config" type="button">
@@ -139,11 +147,11 @@
                                         <small>Compose persona, prompt, and voice behavior</small>
                                     </span>
                                 </button>
-                                <button class="workflow-step nav-link workflow-link" data-page="calls" type="button">
+                                <button class="workflow-step nav-link workflow-link" data-page="contacts" type="button">
                                     <span class="workflow-index">3</span>
                                     <span class="workflow-copy">
-                                        <strong>Add Phone List</strong>
-                                        <small>Prepare contacts to be called in sequence</small>
+                                        <strong>Add Contacts</strong>
+                                        <small>Build phone lists you can launch in sessions</small>
                                     </span>
                                 </button>
                                 <button class="workflow-step nav-link workflow-link" data-page="scheduler" type="button">
@@ -467,19 +475,105 @@
                 </div>
 
                 <!-- Settings Page -->
+                <div id="page-contacts" class="page">
+                    <div class="card contacts-hero-card">
+                        <div class="card-body contacts-hero-body">
+                            <div>
+                                <h3>Contact Lists</h3>
+                                <p class="stat-note">Create your outreach list once, then launch sessions using these saved contacts.</p>
+                            </div>
+                            <button class="btn btn-primary" id="new-contact-btn">+ Add Contact</button>
+                        </div>
+                    </div>
+
+                    <div id="contact-modal" class="modal hidden">
+                        <div class="modal-overlay"></div>
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3 id="contact-modal-title">Add Contact</h3>
+                                <button class="modal-close">&times;</button>
+                            </div>
+                            <form id="contact-form">
+                                <input type="hidden" id="contact-edit-id">
+                                <div class="form-group">
+                                    <label for="contact-name">Full Name</label>
+                                    <input type="text" id="contact-name" required placeholder="e.g. Jane Doe">
+                                </div>
+                                <div class="form-group">
+                                    <label for="contact-phone">Phone Number</label>
+                                    <input type="tel" id="contact-phone" required placeholder="+1234567890">
+                                </div>
+                                <div class="form-group">
+                                    <label for="contact-email">Email (optional)</label>
+                                    <input type="email" id="contact-email" placeholder="jane@company.com">
+                                </div>
+                                <div class="form-group">
+                                    <label for="contact-tags">Tags (comma separated)</label>
+                                    <input type="text" id="contact-tags" placeholder="vip, east-coast, warm-lead">
+                                </div>
+                                <div class="form-group">
+                                    <label for="contact-notes">Notes</label>
+                                    <textarea id="contact-notes" rows="3" placeholder="Context for this contact"></textarea>
+                                </div>
+                                <div id="contact-error" class="form-error"></div>
+                                <div class="modal-actions">
+                                    <button type="button" class="btn btn-outline modal-cancel">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Save Contact</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header"><h3>All Contacts</h3></div>
+                        <div class="card-body">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Phone</th>
+                                        <th>Email</th>
+                                        <th>Tags</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="contacts-table-body">
+                                    <tr><td colspan="6" class="empty-state">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="page-settings" class="page">
                     <div class="settings-grid">
-                        <!-- Workspace Provisioning -->
+                        <!-- Number Marketplace -->
                         <div class="card">
-                            <div class="card-header"><h3>Calling Infrastructure</h3></div>
+                            <div class="card-header"><h3>Number Marketplace</h3></div>
                             <div class="card-body">
-                                <p class="stat-note">Provider credentials and outbound number are configured in your deployment environment.</p>
-                                <p class="stat-note">Set these in <strong>.env</strong> before launching calls:</p>
-                                <ul class="infra-list">
-                                    <li>OUTBOUND_CALLER_NUMBER</li>
-                                    <li>AI_VOICE_PROFILE_ID</li>
-                                    <li>TELNYX_API_KEY</li>
-                                </ul>
+                                <p class="stat-note">Every number is billed at <strong>$1.00 / month</strong>. Buy one or multiple numbers for different sessions.</p>
+                                <div id="number-marketplace-grid" class="number-marketplace-grid"></div>
+                                <div id="number-marketplace-empty" class="empty-state hidden">No numbers available right now.</div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header"><h3>My Numbers</h3></div>
+                            <div class="card-body">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Number</th>
+                                            <th>Price</th>
+                                            <th>Status</th>
+                                            <th>Purchased</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="owned-numbers-table-body">
+                                        <tr><td colspan="4" class="empty-state">Loading...</td></tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
@@ -556,7 +650,7 @@
         </main>
     </div>
 
-    <script src="/static/js/api.js?v=20260312-4"></script>
-    <script src="/static/js/app.js?v=20260312-4"></script>
+    <script src="/static/js/api.js?v=20260312-5"></script>
+    <script src="/static/js/app.js?v=20260312-5"></script>
 </body>
 </html>

@@ -1,4 +1,5 @@
 import hashlib
+import json
 import secrets
 from datetime import datetime, timezone
 
@@ -6,10 +7,19 @@ from sqlalchemy.orm import Session
 
 from shared.exceptions import ConflictException, NotFoundException
 
-from .models import UserApiKey, UserProfile, UserRole
+from .models import UserApiKey, UserContact, UserOwnedNumber, UserProfile, UserRole
 
 
 class UserService:
+    MARKETPLACE_NUMBERS = [
+        "+12065550101",
+        "+12065550102",
+        "+12065550103",
+        "+12065550104",
+        "+12065550105",
+        "+12065550106",
+    ]
+
     @staticmethod
     def create_profile(db: Session, user_id: int, data: dict) -> UserProfile:
         existing = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
@@ -121,3 +131,103 @@ class UserService:
             db.commit()
             db.refresh(api_key)
         return api_key
+
+    @classmethod
+    def list_marketplace_numbers(cls, db: Session) -> list[dict]:
+        owned_numbers = {
+            n.phone_number
+            for n in db.query(UserOwnedNumber.phone_number).all()
+        }
+        return [
+            {"phone_number": n, "monthly_price_usd": 1.0}
+            for n in cls.MARKETPLACE_NUMBERS
+            if n not in owned_numbers
+        ]
+
+    @staticmethod
+    def list_owned_numbers(db: Session, user_id: int) -> list[UserOwnedNumber]:
+        return (
+            db.query(UserOwnedNumber)
+            .filter(UserOwnedNumber.user_id == user_id)
+            .order_by(UserOwnedNumber.purchased_at.desc())
+            .all()
+        )
+
+    @classmethod
+    def purchase_number(
+        cls, db: Session, user_id: int, phone_number: str
+    ) -> UserOwnedNumber:
+        if phone_number not in cls.MARKETPLACE_NUMBERS:
+            raise NotFoundException(detail="Phone number is not available in marketplace")
+
+        existing = (
+            db.query(UserOwnedNumber)
+            .filter(UserOwnedNumber.phone_number == phone_number)
+            .first()
+        )
+        if existing:
+            raise ConflictException(detail="Phone number already purchased")
+
+        owned = UserOwnedNumber(
+            user_id=user_id,
+            phone_number=phone_number,
+            monthly_price_usd=1.0,
+            status="active",
+        )
+        db.add(owned)
+        db.commit()
+        db.refresh(owned)
+        return owned
+
+    @staticmethod
+    def create_contact(db: Session, user_id: int, data: dict) -> UserContact:
+        payload = data.copy()
+        tags = payload.get("tags")
+        payload["tags"] = json.dumps(tags) if tags else None
+        contact = UserContact(user_id=user_id, **payload)
+        db.add(contact)
+        db.commit()
+        db.refresh(contact)
+        return contact
+
+    @staticmethod
+    def list_contacts(db: Session, user_id: int) -> list[UserContact]:
+        return (
+            db.query(UserContact)
+            .filter(UserContact.user_id == user_id)
+            .order_by(UserContact.created_at.desc())
+            .all()
+        )
+
+    @staticmethod
+    def update_contact(db: Session, user_id: int, contact_id: int, data: dict) -> UserContact:
+        contact = (
+            db.query(UserContact)
+            .filter(UserContact.id == contact_id, UserContact.user_id == user_id)
+            .first()
+        )
+        if not contact:
+            raise NotFoundException(detail="Contact not found")
+
+        for key, value in data.items():
+            if key == "tags" and value is not None:
+                setattr(contact, key, json.dumps(value))
+            elif value is not None:
+                setattr(contact, key, value)
+
+        contact.updated_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(contact)
+        return contact
+
+    @staticmethod
+    def delete_contact(db: Session, user_id: int, contact_id: int) -> None:
+        contact = (
+            db.query(UserContact)
+            .filter(UserContact.id == contact_id, UserContact.user_id == user_id)
+            .first()
+        )
+        if not contact:
+            raise NotFoundException(detail="Contact not found")
+        db.delete(contact)
+        db.commit()

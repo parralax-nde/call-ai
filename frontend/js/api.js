@@ -214,4 +214,34 @@ const API = {
     async deleteApiKey(id) {
         return this.request('DELETE', `/users/api-keys/${id}`);
     },
+
+    // --- Number Marketplace ---
+    async getMarketplaceNumbers() {
+        return this.request('GET', '/users/numbers/marketplace');
+    },
+
+    async getOwnedNumbers() {
+        return this.request('GET', '/users/numbers');
+    },
+
+    async purchaseNumber(phoneNumber) {
+        return this.request('POST', '/users/numbers/purchase', { phone_number: phoneNumber });
+    },
+
+    // --- Contacts ---
+    async getContacts() {
+        return this.request('GET', '/users/contacts');
+    },
+
+    async createContact(data) {
+        return this.request('POST', '/users/contacts', data);
+    },
+
+    async updateContact(id, data) {
+        return this.request('PUT', `/users/contacts/${id}`, data);
+    },
+
+    async deleteContact(id) {
+        return this.request('DELETE', `/users/contacts/${id}`);
+    },
 };
