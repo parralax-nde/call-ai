@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css?v=20260312">
+    <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
 </head>
 <body>
     <!-- Auth Pages -->
@@ -66,37 +67,37 @@
             <ul class="sidebar-nav">
                 <li>
                     <a href="#" class="nav-link active" data-page="dashboard">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12c0-1.1.9-2 2-2h3V7c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2v3h3c1.1 0 2 .9 2 2v8c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2v-8z"/></svg>
+                        <i data-lucide="layout-dashboard" class="nav-icon"></i>
                         <span>Dashboard</span>
                     </a>
                 </li>
                 <li>
                     <a href="#" class="nav-link" data-page="marketplace">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 7l-8.97 12.6c-.31.42-.92.42-1.23 0L2 7m18 0H4m18 0c1.1 0 2-.9 2-2s-.9-2-2-2H4c-1.1 0-2 .9-2 2s.9 2 2 2z"/></svg>
+                        <i data-lucide="store" class="nav-icon"></i>
                         <span>Number Marketplace</span>
                     </a>
                 </li>
                 <li>
                     <a href="#" class="nav-link" data-page="sessions">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v20m-8-8h16M3 4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4z"/></svg>
+                        <i data-lucide="bot" class="nav-icon"></i>
                         <span>Sessions</span>
                     </a>
                 </li>
                 <li>
                     <a href="#" class="nav-link" data-page="wallet">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 7H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zm-1 8h-6v2h6v-2z"/></svg>
+                        <i data-lucide="wallet" class="nav-icon"></i>
                         <span>Wallet</span>
                     </a>
                 </li>
                 <li>
                     <a href="#" class="nav-link" data-page="analytics">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18M3 18l5-5 4 4 8-8"/></svg>
+                        <i data-lucide="bar-chart-3" class="nav-icon"></i>
                         <span>Analytics</span>
                     </a>
                 </li>
                 <li>
                     <a href="#" class="nav-link" data-page="settings">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6m-14.78 7.78l4.24-4.24m5.08-5.08l4.24-4.24"/></svg>
+                        <i data-lucide="settings" class="nav-icon"></i>
                         <span>Settings</span>
                     </a>
                 </li>
@@ -381,5 +382,6 @@
     <!-- Scripts -->
     <script src="/static/js/api.js?v=20260312"></script>
     <script src="/static/js/app.js?v=20260312"></script>
+    <script>lucide.createIcons();</script>
 </body>
 </html>
