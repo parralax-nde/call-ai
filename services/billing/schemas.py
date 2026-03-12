@@ -156,3 +156,32 @@ class CostEstimate(BaseModel):
     usage_type: str
     quantity: float
     estimated_cost: float
+
+
+# ===== Wallet Schemas =====
+
+class WalletBalanceResponse(BaseModel):
+    balance: float
+    currency: str
+    total_recharged: float
+    total_spent: float
+
+    model_config = {"from_attributes": True}
+
+
+class WalletCreditRequest(BaseModel):
+    amount: float
+    description: str = "Wallet top-up"
+
+
+class WalletTransactionResponse(BaseModel):
+    id: int
+    user_id: int
+    transaction_type: str
+    amount: float
+    description: str
+    reference_id: str | None
+    balance_after: float
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

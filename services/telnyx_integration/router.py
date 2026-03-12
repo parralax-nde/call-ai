@@ -1,17 +1,20 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from shared.auth import get_current_user
 from shared.database import get_db
 
 from .schemas import (
+    AvailableNumberResponse,
     CallResponse,
     CallStatusUpdate,
     InitiateCallRequest,
+    PurchaseNumberRequest,
     TelnyxConfigCreate,
     TelnyxConfigResponse,
     TelnyxConfigUpdate,
     TelnyxWebhookEvent,
+    UserPhoneNumberResponse,
 )
 from .service import TelnyxService
 
@@ -95,3 +98,49 @@ def update_call_status(
 ) -> CallResponse:
     call = TelnyxService.update_call_status(db, str(call_id), status_data)
     return CallResponse.model_validate(call)
+
+
+# ===== Number Marketplace Endpoints =====
+
+
+@router.get("/marketplace/numbers", response_model=list[AvailableNumberResponse])
+def search_available_numbers(
+    country: str = Query("US"),
+    area_code: str | None = Query(None),
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> list[AvailableNumberResponse]:
+    numbers = TelnyxService.search_available_numbers(db, area_code, country)
+    return [AvailableNumberResponse.model_validate(n) for n in numbers]
+
+
+@router.post("/purchase", response_model=UserPhoneNumberResponse, status_code=201)
+def purchase_phone_number(
+    data: PurchaseNumberRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> UserPhoneNumberResponse:
+    number = TelnyxService.purchase_phone_number(
+        db, int(current_user["sub"]),
+        data.phone_number, data.monthly_price_usd, data.setup_price_usd,
+    )
+    return UserPhoneNumberResponse.model_validate(number)
+
+
+@router.get("/user-numbers", response_model=list[UserPhoneNumberResponse])
+def get_user_phone_numbers(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> list[UserPhoneNumberResponse]:
+    numbers = TelnyxService.get_user_phone_numbers(db, int(current_user["sub"]))
+    return [UserPhoneNumberResponse.model_validate(n) for n in numbers]
+
+
+@router.delete("/numbers/{number_id}", response_model=UserPhoneNumberResponse)
+def cancel_phone_number(
+    number_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> UserPhoneNumberResponse:
+    number = TelnyxService.cancel_phone_number(db, int(current_user["sub"]), number_id)
+    return UserPhoneNumberResponse.model_validate(number)

@@ -5,7 +5,6 @@ from pydantic import BaseModel
 
 class TelnyxConfigCreate(BaseModel):
     api_key: str
-    phone_number: str
     voice_profile_id: str | None = None
     webhook_url: str | None = None
 
@@ -19,7 +18,6 @@ class TelnyxConfigUpdate(BaseModel):
 class TelnyxConfigResponse(BaseModel):
     id: int
     user_id: int
-    phone_number: str
     voice_profile_id: str | None
     webhook_url: str | None
     created_at: datetime
@@ -63,3 +61,40 @@ class CallStatusUpdate(BaseModel):
     telnyx_call_id: str | None = None
     duration_seconds: int | None = None
     recording_url: str | None = None
+
+
+# ===== Marketplace Schemas =====
+
+class AvailableNumberResponse(BaseModel):
+    id: int
+    phone_number: str
+    country_code: str
+    area_code: str
+    region: str | None
+    monthly_price_usd: float
+    setup_price_usd: float
+    features: str | None
+    is_available: bool
+
+    model_config = {"from_attributes": True}
+
+
+class PurchaseNumberRequest(BaseModel):
+    phone_number: str
+    monthly_price_usd: float = 1.0
+    setup_price_usd: float = 0.0
+
+
+class UserPhoneNumberResponse(BaseModel):
+    id: int
+    user_id: int
+    phone_number: str
+    country_code: str
+    area_code: str | None
+    monthly_price_usd: float
+    features: str | None
+    status: str
+    purchased_at: datetime
+    cancelled_at: datetime | None
+
+    model_config = {"from_attributes": True}

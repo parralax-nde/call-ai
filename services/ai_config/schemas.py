@@ -120,3 +120,54 @@ class VersionResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ===== Session Schemas =====
+
+class SessionCreate(BaseModel):
+    name: str
+    description: str | None = None
+    persona_id: int | None = None
+    prompt_template_id: int | None = None
+    target_phone_number: str | None = None
+    from_phone_number: str | None = None
+    scheduled_at: datetime | None = None
+    recurrence_pattern: str | None = None
+    recurrence_end_date: datetime | None = None
+    status: str = "draft"
+
+
+class SessionUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    persona_id: int | None = None
+    prompt_template_id: int | None = None
+    target_phone_number: str | None = None
+    from_phone_number: str | None = None
+    scheduled_at: datetime | None = None
+    recurrence_pattern: str | None = None
+    recurrence_end_date: datetime | None = None
+    status: str | None = None
+
+
+class SessionResponse(BaseModel):
+    id: int
+    user_id: int
+    name: str
+    description: str | None
+    persona_id: int | None
+    prompt_template_id: int | None
+    voice_agent_id: int | None
+    target_phone_number: str | None
+    from_phone_number: str | None
+    scheduled_at: datetime | None
+    recurrence_pattern: str | None
+    recurrence_end_date: datetime | None
+    status: str
+    execution_count: int
+    last_executed_at: datetime | None
+    is_template: bool
+    created_at: datetime
+    updated_at: datetime | None
+
+    model_config = {"from_attributes": True}

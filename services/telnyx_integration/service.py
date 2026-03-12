@@ -23,7 +23,6 @@ class TelnyxService:
         config = TelnyxConfig(
             user_id=user_id,
             api_key_encrypted=encrypted_key,
-            phone_number=data.phone_number,
             voice_profile_id=data.voice_profile_id,
             webhook_url=data.webhook_url,
         )
@@ -60,8 +59,7 @@ class TelnyxService:
         settings = get_settings()
         config = db.query(TelnyxConfig).filter(TelnyxConfig.user_id == user_id).first()
 
-        default_number = config.phone_number if config else settings.OUTBOUND_CALLER_NUMBER
-        from_number = call_data.from_number or default_number
+        from_number = call_data.from_number or settings.OUTBOUND_CALLER_NUMBER
         if not from_number:
             raise NotFoundException(
                 detail="Outbound caller number is not configured. Set OUTBOUND_CALLER_NUMBER in .env."

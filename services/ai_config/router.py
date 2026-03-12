@@ -14,6 +14,9 @@ from .schemas import (
     PromptCreate,
     PromptResponse,
     PromptUpdate,
+    SessionCreate,
+    SessionResponse,
+    SessionUpdate,
     VersionResponse,
 )
 from .service import AiConfigService
@@ -196,6 +199,62 @@ def get_prompt_versions(
 ) -> list[VersionResponse]:
     versions = AiConfigService.get_prompt_versions(db, prompt_id)
     return [VersionResponse.model_validate(v) for v in versions]
+
+
+# --- Session Endpoints ---
+
+
+@router.get("/sessions", response_model=list[SessionResponse])
+def list_sessions(
+    skip: int = 0,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> list[SessionResponse]:
+    sessions = AiConfigService.list_sessions(db, int(current_user["sub"]), skip, limit)
+    return [SessionResponse.model_validate(s) for s in sessions]
+
+
+@router.post("/sessions", response_model=SessionResponse, status_code=201)
+def create_session(
+    data: SessionCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> SessionResponse:
+    session = AiConfigService.create_session(db, int(current_user["sub"]), data)
+    return SessionResponse.model_validate(session)
+
+
+@router.get("/sessions/{session_id}", response_model=SessionResponse)
+def get_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> SessionResponse:
+    session = AiConfigService.get_session(db, session_id)
+    return SessionResponse.model_validate(session)
+
+
+@router.put("/sessions/{session_id}", response_model=SessionResponse)
+def update_session(
+    session_id: int,
+    data: SessionUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> SessionResponse:
+    session = AiConfigService.update_session(
+        db, session_id, int(current_user["sub"]), data
+    )
+    return SessionResponse.model_validate(session)
+
+
+@router.delete("/sessions/{session_id}", status_code=204)
+def delete_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> None:
+    AiConfigService.delete_session(db, session_id, int(current_user["sub"]))
 
 
 @router.post("/prompts/{prompt_id}/revert/{version}", response_model=PromptResponse)

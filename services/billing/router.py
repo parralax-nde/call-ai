@@ -21,6 +21,9 @@ from .schemas import (
     UsageRecordCreate,
     UsageRecordResponse,
     UsageSummary,
+    WalletBalanceResponse,
+    WalletCreditRequest,
+    WalletTransactionResponse,
 )
 from .service import BillingService
 
@@ -231,3 +234,41 @@ def estimate_cost(
         quantity=quantity,
         estimated_cost=estimated_cost,
     )
+
+
+# ===== Wallet Endpoints =====
+
+
+@router.get("/wallet/balance", response_model=WalletBalanceResponse)
+def get_wallet_balance(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> WalletBalanceResponse:
+    user_id = _get_user_id(current_user)
+    wallet = billing_service.get_or_create_wallet(db, user_id)
+    return WalletBalanceResponse.model_validate(wallet)
+
+
+@router.post("/wallet/credit", response_model=WalletTransactionResponse, status_code=201)
+def add_wallet_credit(
+    data: WalletCreditRequest,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> WalletTransactionResponse:
+    user_id = _get_user_id(current_user)
+    transaction = billing_service.add_wallet_credit(
+        db, user_id, data.amount, data.description
+    )
+    return WalletTransactionResponse.model_validate(transaction)
+
+
+@router.get("/wallet/transactions", response_model=list[WalletTransactionResponse])
+def get_wallet_transactions(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[WalletTransactionResponse]:
+    user_id = _get_user_id(current_user)
+    txns = billing_service.get_wallet_transactions(db, user_id, skip, limit)
+    return [WalletTransactionResponse.model_validate(t) for t in txns]

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from shared.exceptions import NotFoundException
 
-from .models import AiPersona, ConversationalFlow, PromptTemplate, PromptVersion
+from .models import AiPersona, CallSession, ConversationalFlow, PromptTemplate, PromptVersion
 from .schemas import (
     FlowCreate,
     FlowUpdate,
@@ -12,6 +12,8 @@ from .schemas import (
     PersonaUpdate,
     PromptCreate,
     PromptUpdate,
+    SessionCreate,
+    SessionUpdate,
 )
 
 
@@ -269,3 +271,77 @@ class AiConfigService:
         db.commit()
         db.refresh(prompt)
         return prompt
+
+    # --- Session CRUD ---
+
+    @staticmethod
+    def create_session(db: Session, user_id: int, data: SessionCreate) -> CallSession:
+        session = CallSession(
+            user_id=user_id,
+            name=data.name,
+            description=data.description,
+            persona_id=data.persona_id,
+            prompt_template_id=data.prompt_template_id,
+            target_phone_number=data.target_phone_number,
+            from_phone_number=data.from_phone_number,
+            scheduled_at=data.scheduled_at,
+            recurrence_pattern=data.recurrence_pattern,
+            recurrence_end_date=data.recurrence_end_date,
+            status=data.status,
+        )
+        db.add(session)
+        db.commit()
+        db.refresh(session)
+        return session
+
+    @staticmethod
+    def list_sessions(
+        db: Session, user_id: int, skip: int = 0, limit: int = 20
+    ) -> list[CallSession]:
+        return (
+            db.query(CallSession)
+            .filter(CallSession.user_id == user_id)
+            .order_by(CallSession.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+    @staticmethod
+    def get_session(db: Session, session_id: int) -> CallSession:
+        session = db.query(CallSession).filter(CallSession.id == session_id).first()
+        if not session:
+            raise NotFoundException(detail="Session not found")
+        return session
+
+    @staticmethod
+    def update_session(
+        db: Session, session_id: int, user_id: int, data: SessionUpdate
+    ) -> CallSession:
+        session = (
+            db.query(CallSession)
+            .filter(CallSession.id == session_id, CallSession.user_id == user_id)
+            .first()
+        )
+        if not session:
+            raise NotFoundException(detail="Session not found")
+
+        update_data = data.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(session, field, value)
+
+        db.commit()
+        db.refresh(session)
+        return session
+
+    @staticmethod
+    def delete_session(db: Session, session_id: int, user_id: int) -> None:
+        session = (
+            db.query(CallSession)
+            .filter(CallSession.id == session_id, CallSession.user_id == user_id)
+            .first()
+        )
+        if not session:
+            raise NotFoundException(detail="Session not found")
+        db.delete(session)
+        db.commit()
