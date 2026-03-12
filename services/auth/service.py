@@ -78,14 +78,22 @@ class AuthService:
         user = db.query(User).filter(User.email == email).first()
         if not user:
             raise NotFoundException(detail="User not found")
-        return secrets.token_urlsafe(32)
+        token = secrets.token_urlsafe(32)
+        user.password_reset_token = token
+        db.commit()
+        return token
 
     @staticmethod
     def reset_password(db: Session, token: str, new_password: str) -> None:
         if not token:
             raise BadRequestException(detail="Invalid or expired reset token")
-
-        # In a real implementation, the token would be validated against
-        # a stored reset token. For now, we treat any non-empty token
-        # as valid and reset the first matching user placeholder.
-        raise BadRequestException(detail="Invalid or expired reset token")
+        user = (
+            db.query(User)
+            .filter(User.password_reset_token == token)
+            .first()
+        )
+        if not user:
+            raise BadRequestException(detail="Invalid or expired reset token")
+        user.hashed_password = get_password_hash(new_password)
+        user.password_reset_token = None
+        db.commit()
