@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
+from shared.config import get_settings
 from shared.exceptions import NotFoundException
 
 from .models import CallRecord, TelnyxConfig
@@ -56,11 +57,15 @@ class TelnyxService:
     def initiate_call(
         db: Session, user_id: int, call_data: InitiateCallRequest
     ) -> CallRecord:
+        settings = get_settings()
         config = db.query(TelnyxConfig).filter(TelnyxConfig.user_id == user_id).first()
-        if not config:
-            raise NotFoundException(detail="Telnyx configuration not found. Please configure Telnyx first.")
 
-        from_number = call_data.from_number or config.phone_number
+        default_number = config.phone_number if config else settings.OUTBOUND_CALLER_NUMBER
+        from_number = call_data.from_number or default_number
+        if not from_number:
+            raise NotFoundException(
+                detail="Outbound caller number is not configured. Set OUTBOUND_CALLER_NUMBER in .env."
+            )
 
         call_record = CallRecord(
             user_id=user_id,

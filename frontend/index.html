@@ -3,15 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Call Automator</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <title>Bookcall</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css?v=20260312-4">
 </head>
 <body>
     <!-- Auth Pages -->
     <div id="auth-container" class="auth-container">
         <div class="auth-card">
-            <h1 class="auth-title">AI Call Automator</h1>
-            <p class="auth-subtitle">Automate AI-powered phone calls</p>
+            <h1 class="auth-title">Bookcall</h1>
+            <p class="auth-subtitle">Launch AI calling sessions from one workspace</p>
 
             <!-- Login Form -->
             <form id="login-form" class="auth-form">
@@ -56,14 +59,49 @@
         <!-- Sidebar -->
         <nav class="sidebar">
             <div class="sidebar-header">
-                <h2>AI Call Automator</h2>
+                <h2>Bookcall</h2>
             </div>
             <ul class="sidebar-nav">
-                <li><a href="#" class="nav-link active" data-page="dashboard">📊 Dashboard</a></li>
-                <li><a href="#" class="nav-link" data-page="calls">📞 Calls</a></li>
-                <li><a href="#" class="nav-link" data-page="ai-config">🤖 AI Config</a></li>
-                <li><a href="#" class="nav-link" data-page="scheduler">📅 Scheduler</a></li>
-                <li><a href="#" class="nav-link" data-page="settings">⚙️ Settings</a></li>
+                <li>
+                    <a href="#" class="nav-link active" data-page="dashboard">
+                        <span class="nav-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M3 13h8V3H3v10Zm10 8h8V3h-8v18ZM3 21h8v-6H3v6Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <span class="nav-text">Overview</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link" data-page="calls">
+                        <span class="nav-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M6.62 10.79a15.9 15.9 0 0 0 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20a1 1 0 0 1-1 1C10.85 21 3 13.15 3 3a1 1 0 0 1 1-1h3.5c.55 0 1 .45 1 1 0 1.24.2 2.45.57 3.57.12.35.03.75-.24 1.02l-2.2 2.2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <span class="nav-text">Phone Lists</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link" data-page="ai-config">
+                        <span class="nav-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M9 3h6l1 3h3v8h-2v4H7v-4H5V6h3l1-3Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 11h6M10 14h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                        </span>
+                        <span class="nav-text">Sessions</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link" data-page="scheduler">
+                        <span class="nav-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M8 2v3M16 2v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <span class="nav-text">Launch Plan</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link" data-page="settings">
+                        <span class="nav-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8.92 4.6h.08a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.08a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.08a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <span class="nav-text">Workspace</span>
+                    </a>
+                </li>
             </ul>
             <div class="sidebar-footer">
                 <span id="user-email" class="user-email"></span>
@@ -81,21 +119,71 @@
             <div id="page-content" class="page-content">
                 <!-- Dashboard Page -->
                 <div id="page-dashboard" class="page active">
+                    <div class="card workflow-card">
+                        <div class="card-header">
+                            <h3>Session Launch Workflow</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="workflow-steps">
+                                <button class="workflow-step nav-link workflow-link" data-page="settings" type="button">
+                                    <span class="workflow-index">1</span>
+                                    <span class="workflow-copy">
+                                        <strong>Buy Number</strong>
+                                        <small>Numbers and voice are managed from workspace .env</small>
+                                    </span>
+                                </button>
+                                <button class="workflow-step nav-link workflow-link" data-page="ai-config" type="button">
+                                    <span class="workflow-index">2</span>
+                                    <span class="workflow-copy">
+                                        <strong>Create Session</strong>
+                                        <small>Compose persona, prompt, and voice behavior</small>
+                                    </span>
+                                </button>
+                                <button class="workflow-step nav-link workflow-link" data-page="calls" type="button">
+                                    <span class="workflow-index">3</span>
+                                    <span class="workflow-copy">
+                                        <strong>Add Phone List</strong>
+                                        <small>Prepare contacts to be called in sequence</small>
+                                    </span>
+                                </button>
+                                <button class="workflow-step nav-link workflow-link" data-page="scheduler" type="button">
+                                    <span class="workflow-index">4</span>
+                                    <span class="workflow-copy">
+                                        <strong>Set Start Time</strong>
+                                        <small>Schedule when the session starts running</small>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <div class="stat-value" id="stat-total">-</div>
+                            <div class="stat-top">
+                                <div class="stat-icon" aria-hidden="true">TC</div>
+                                <div class="stat-value" id="stat-total">-</div>
+                            </div>
                             <div class="stat-label">Total Calls</div>
                         </div>
                         <div class="stat-card stat-active">
-                            <div class="stat-value" id="stat-active">-</div>
+                            <div class="stat-top">
+                                <div class="stat-icon" aria-hidden="true">AC</div>
+                                <div class="stat-value" id="stat-active">-</div>
+                            </div>
                             <div class="stat-label">Active Calls</div>
                         </div>
                         <div class="stat-card stat-completed">
-                            <div class="stat-value" id="stat-completed">-</div>
+                            <div class="stat-top">
+                                <div class="stat-icon" aria-hidden="true">OK</div>
+                                <div class="stat-value" id="stat-completed">-</div>
+                            </div>
                             <div class="stat-label">Completed</div>
                         </div>
                         <div class="stat-card stat-failed">
-                            <div class="stat-value" id="stat-failed">-</div>
+                            <div class="stat-top">
+                                <div class="stat-icon" aria-hidden="true">ER</div>
+                                <div class="stat-value" id="stat-failed">-</div>
+                            </div>
                             <div class="stat-label">Failed</div>
                         </div>
                     </div>
@@ -104,7 +192,8 @@
                             <h3>Average Call Duration</h3>
                         </div>
                         <div class="card-body">
-                            <p class="big-number" id="stat-avg-duration">-</p>
+                            <p class="big-number" id="stat-avg-duration">0m 0s</p>
+                            <p class="stat-note" id="stat-avg-note">No completed calls yet</p>
                         </div>
                     </div>
                     <div class="card">
@@ -380,27 +469,17 @@
                 <!-- Settings Page -->
                 <div id="page-settings" class="page">
                     <div class="settings-grid">
-                        <!-- Telnyx Config -->
+                        <!-- Workspace Provisioning -->
                         <div class="card">
-                            <div class="card-header"><h3>Telnyx Configuration</h3></div>
+                            <div class="card-header"><h3>Calling Infrastructure</h3></div>
                             <div class="card-body">
-                                <form id="telnyx-config-form">
-                                    <div class="form-group">
-                                        <label for="telnyx-api-key">API Key</label>
-                                        <input type="password" id="telnyx-api-key" placeholder="Your Telnyx API key">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="telnyx-phone">Phone Number</label>
-                                        <input type="tel" id="telnyx-phone" placeholder="+1234567890">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="telnyx-webhook">Webhook URL (optional)</label>
-                                        <input type="url" id="telnyx-webhook" placeholder="https://...">
-                                    </div>
-                                    <div id="telnyx-error" class="form-error"></div>
-                                    <div id="telnyx-success" class="form-success hidden"></div>
-                                    <button type="submit" class="btn btn-primary">Save Configuration</button>
-                                </form>
+                                <p class="stat-note">Provider credentials and outbound number are configured in your deployment environment.</p>
+                                <p class="stat-note">Set these in <strong>.env</strong> before launching calls:</p>
+                                <ul class="infra-list">
+                                    <li>OUTBOUND_CALLER_NUMBER</li>
+                                    <li>AI_VOICE_PROFILE_ID</li>
+                                    <li>TELNYX_API_KEY</li>
+                                </ul>
                             </div>
                         </div>
 
@@ -477,7 +556,7 @@
         </main>
     </div>
 
-    <script src="/static/js/api.js"></script>
-    <script src="/static/js/app.js"></script>
+    <script src="/static/js/api.js?v=20260312-4"></script>
+    <script src="/static/js/app.js?v=20260312-4"></script>
 </body>
 </html>

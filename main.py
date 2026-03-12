@@ -2,7 +2,7 @@ import os
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from shared.database import Base, get_engine
@@ -22,8 +22,8 @@ from services.admin.router import router as admin_router
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend")
 
 app = FastAPI(
-    title="AI Call Automator",
-    description="Microservices-based AI assistant call automation platform",
+    title="Bookcall",
+    description="Session-based AI calling platform",
     version="0.1.0",
 )
 
@@ -67,7 +67,7 @@ async def startup_event() -> None:
 @app.get("/")
 async def root() -> dict:
     return {
-        "name": "AI Call Automator",
+        "name": "Bookcall",
         "version": "0.1.0",
         "status": "running",
     }
@@ -76,6 +76,11 @@ async def root() -> dict:
 @app.get("/health")
 async def health_check() -> dict:
     return {"status": "healthy"}
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon() -> Response:
+    return Response(status_code=204)
 
 
 # Serve frontend static assets

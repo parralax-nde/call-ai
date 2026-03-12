@@ -3,6 +3,7 @@
  */
 const API = {
     BASE_URL: window.location.origin,
+    authEventDispatched: false,
 
     /**
      * Get the stored auth token.
@@ -23,6 +24,7 @@ const API = {
      */
     clearToken() {
         localStorage.removeItem('access_token');
+        this.authEventDispatched = false;
     },
 
     /**
@@ -42,20 +44,28 @@ const API = {
 
         const response = await fetch(`${this.BASE_URL}${path}`, options);
 
-        if (response.status === 401) {
+        if (response.status === 401 || response.status === 403) {
             this.clearToken();
-            window.location.reload();
-            return;
+            if (!this.authEventDispatched) {
+                this.authEventDispatched = true;
+                window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+            }
+            throw new Error(response.status === 403 ? 'Forbidden' : 'Unauthorized');
         }
 
         if (response.status === 204) {
             return null;
         }
 
-        const data = await response.json();
+        let data = null;
+        try {
+            data = await response.json();
+        } catch {
+            data = null;
+        }
 
         if (!response.ok) {
-            throw new Error(data.detail || `Request failed (${response.status})`);
+            throw new Error((data && data.detail) || `Request failed (${response.status})`);
         }
 
         return data;

@@ -1,12 +1,8 @@
-version: "3.8"
-
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
     environment:
       DATABASE_URL: mysql+pymysql://call_ai:call_ai_secret@mysql:3306/call_ai
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/

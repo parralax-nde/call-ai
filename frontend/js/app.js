@@ -33,6 +33,12 @@ document.addEventListener('DOMContentLoaded', () => {
         navigateTo('dashboard');
     }
 
+    // If token expires, return to auth screen without hard page reload.
+    window.addEventListener('auth:unauthorized', () => {
+        localStorage.removeItem('user_email');
+        showAuth();
+    });
+
     // --- Auth form toggling ---
     $('#show-register').addEventListener('click', (e) => {
         e.preventDefault();
@@ -49,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Login ---
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const stopLoading = startButtonLoading(e.submitter || loginForm.querySelector('button[type="submit"]'), 'Signing In...');
         const errorEl = $('#login-error');
         errorEl.textContent = '';
         const email = $('#login-email').value;
@@ -59,12 +66,15 @@ document.addEventListener('DOMContentLoaded', () => {
             showApp();
         } catch (err) {
             errorEl.textContent = err.message;
+        } finally {
+            stopLoading();
         }
     });
 
     // --- Register ---
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const stopLoading = startButtonLoading(e.submitter || registerForm.querySelector('button[type="submit"]'), 'Creating...');
         const errorEl = $('#register-error');
         errorEl.textContent = '';
         const email = $('#register-email').value;
@@ -72,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const confirm = $('#register-confirm').value;
         if (password !== confirm) {
             errorEl.textContent = 'Passwords do not match';
+            stopLoading();
             return;
         }
         try {
@@ -81,25 +92,33 @@ document.addEventListener('DOMContentLoaded', () => {
             showApp();
         } catch (err) {
             errorEl.textContent = err.message;
+        } finally {
+            stopLoading();
         }
     });
 
     // --- Logout ---
     $('#logout-btn').addEventListener('click', async () => {
-        await API.logout();
-        localStorage.removeItem('user_email');
-        showAuth();
+        const button = $('#logout-btn');
+        const stopLoading = startButtonLoading(button, 'Logging out...');
+        try {
+            await API.logout();
+            localStorage.removeItem('user_email');
+            showAuth();
+        } finally {
+            stopLoading();
+        }
     });
 
     // =====================
     // Navigation
     // =====================
     const pageTitles = {
-        dashboard: 'Dashboard',
-        calls: 'Calls',
-        'ai-config': 'AI Configuration',
-        scheduler: 'Scheduler',
-        settings: 'Settings',
+        dashboard: 'Overview',
+        calls: 'Phone Lists',
+        'ai-config': 'Sessions',
+        scheduler: 'Launch Plan',
+        settings: 'Workspace',
     };
 
     function navigateTo(page) {
@@ -120,6 +139,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     $$('.nav-link').forEach((link) => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            navigateTo(link.dataset.page);
+        });
+    });
+
+    $$('.workflow-link').forEach((link) => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             navigateTo(link.dataset.page);
@@ -172,6 +198,20 @@ document.addEventListener('DOMContentLoaded', () => {
         return div.innerHTML;
     }
 
+    function startButtonLoading(button, loadingText = 'Loading...') {
+        if (!button) return () => {};
+        const originalText = button.textContent;
+        button.dataset.originalText = originalText;
+        button.textContent = loadingText;
+        button.classList.add('is-loading');
+        button.disabled = true;
+        return () => {
+            button.disabled = false;
+            button.classList.remove('is-loading');
+            button.textContent = button.dataset.originalText || originalText;
+        };
+    }
+
     // =====================
     // Dashboard
     // =====================
@@ -183,13 +223,20 @@ document.addEventListener('DOMContentLoaded', () => {
             $('#stat-completed').textContent = stats.completed_calls ?? 0;
             $('#stat-failed').textContent = stats.failed_calls ?? 0;
             const avg = stats.avg_duration_seconds;
-            $('#stat-avg-duration').textContent = avg != null ? formatDuration(Math.round(avg)) : 'N/A';
+            if (avg != null && Number(avg) > 0) {
+                $('#stat-avg-duration').textContent = formatDuration(Math.round(avg));
+                $('#stat-avg-note').textContent = 'Based on completed calls';
+            } else {
+                $('#stat-avg-duration').textContent = '0m 0s';
+                $('#stat-avg-note').textContent = 'No completed calls yet';
+            }
         } catch {
             $('#stat-total').textContent = '0';
             $('#stat-active').textContent = '0';
             $('#stat-completed').textContent = '0';
             $('#stat-failed').textContent = '0';
-            $('#stat-avg-duration').textContent = 'N/A';
+            $('#stat-avg-duration').textContent = '0m 0s';
+            $('#stat-avg-note').textContent = 'Waiting for call data';
         }
 
         // Recent calls
@@ -262,6 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     $('#new-call-form').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const stopLoading = startButtonLoading(e.submitter || $('#new-call-form button[type="submit"]'), 'Starting...');
         const errorEl = $('#call-error');
         errorEl.textContent = '';
         try {
@@ -275,6 +323,8 @@ document.addEventListener('DOMContentLoaded', () => {
             loadCalls();
         } catch (err) {
             errorEl.textContent = err.message;
+        } finally {
+            stopLoading();
         }
     });
 
@@ -345,6 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     $('#prompt-form').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const stopLoading = startButtonLoading(e.submitter || $('#prompt-form button[type="submit"]'), 'Saving...');
         const errorEl = $('#prompt-error');
         errorEl.textContent = '';
         const editId = $('#prompt-edit-id').value;
@@ -366,6 +417,8 @@ document.addEventListener('DOMContentLoaded', () => {
             loadPrompts();
         } catch (err) {
             errorEl.textContent = err.message;
+        } finally {
+            stopLoading();
         }
     });
 
@@ -443,6 +496,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     $('#persona-form').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const stopLoading = startButtonLoading(e.submitter || $('#persona-form button[type="submit"]'), 'Saving...');
         const errorEl = $('#persona-error');
         errorEl.textContent = '';
         const editId = $('#persona-edit-id').value;
@@ -464,6 +518,8 @@ document.addEventListener('DOMContentLoaded', () => {
             loadPersonas();
         } catch (err) {
             errorEl.textContent = err.message;
+        } finally {
+            stopLoading();
         }
     });
 
@@ -552,6 +608,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     $('#schedule-form').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const stopLoading = startButtonLoading(e.submitter || $('#schedule-form button[type="submit"]'), 'Scheduling...');
         const errorEl = $('#schedule-error');
         errorEl.textContent = '';
         try {
@@ -567,6 +624,8 @@ document.addEventListener('DOMContentLoaded', () => {
             loadScheduledCalls();
         } catch (err) {
             errorEl.textContent = err.message;
+        } finally {
+            stopLoading();
         }
     });
 
@@ -574,17 +633,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Settings
     // =====================
     async function loadSettings() {
-        // Load Telnyx config
-        try {
-            const config = await API.getTelnyxConfig();
-            if (config) {
-                $('#telnyx-phone').value = config.phone_number || '';
-                $('#telnyx-webhook').value = config.webhook_url || '';
-            }
-        } catch {
-            // No config yet - that's OK
-        }
-
         // Load profile
         try {
             const profile = await API.getProfile();
@@ -601,33 +649,11 @@ document.addEventListener('DOMContentLoaded', () => {
         loadApiKeys();
     }
 
-    // Telnyx config form
-    $('#telnyx-config-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const errorEl = $('#telnyx-error');
-        const successEl = $('#telnyx-success');
-        errorEl.textContent = '';
-        successEl.classList.add('hidden');
-        try {
-            const apiKey = $('#telnyx-api-key').value;
-            const phone = $('#telnyx-phone').value;
-            const webhook = $('#telnyx-webhook').value;
-            if (apiKey) {
-                await API.saveTelnyxConfig(apiKey, phone, webhook);
-            } else {
-                await API.updateTelnyxConfig(phone, webhook);
-            }
-            successEl.textContent = 'Configuration saved successfully';
-            successEl.classList.remove('hidden');
-        } catch (err) {
-            errorEl.textContent = err.message;
-        }
-    });
-
     // Profile form
     let profileExists = false;
     $('#profile-form').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const stopLoading = startButtonLoading(e.submitter || $('#profile-form button[type="submit"]'), 'Updating...');
         const errorEl = $('#profile-error');
         const successEl = $('#profile-success');
         errorEl.textContent = '';
@@ -657,11 +683,17 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 errorEl.textContent = err.message;
             }
+        } finally {
+            stopLoading();
         }
     });
 
-    // Check if profile exists on settings load
+    // Check if profile exists only when user has a token.
     (async () => {
+        if (!API.getToken()) {
+            profileExists = false;
+            return;
+        }
         try {
             await API.getProfile();
             profileExists = true;
@@ -716,6 +748,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     $('#api-key-form').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const stopLoading = startButtonLoading(e.submitter || $('#api-key-form button[type="submit"]'), 'Creating...');
         try {
             const result = await API.createApiKey($('#api-key-name').value);
             $('#api-key-value').textContent = result.api_key;
@@ -724,6 +757,8 @@ document.addEventListener('DOMContentLoaded', () => {
             loadApiKeys();
         } catch (err) {
             alert('Failed to create API key: ' + err.message);
+        } finally {
+            stopLoading();
         }
     });
 

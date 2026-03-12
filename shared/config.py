@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    APP_NAME: str = "AI Call Automator"
+    APP_NAME: str = "Bookcall"
     DEBUG: bool = False
 
     DATABASE_URL: str = "sqlite:///./test.db"
@@ -15,6 +15,8 @@ class Settings(BaseSettings):
 
     TELNYX_API_KEY: str = ""
     TELNYX_API_URL: str = "https://api.telnyx.com/v2"
+    OUTBOUND_CALLER_NUMBER: str = ""
+    AI_VOICE_PROFILE_ID: str = ""
 
     RESEND_API_KEY: str = ""
 
