@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bookcall PRO - AI Calling Platform</title>
+    <title>BookCaller - AI Calling Platform</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
     <div id="auth-container" class="auth-container">
         <div class="auth-card">
             <div class="auth-logo">
-                <h1>Bookcall PRO</h1>
+                <h1>BookCaller</h1>
                 <p>Enterprise AI Voice Agent Platform</p>
             </div>
 
@@ -60,45 +60,46 @@
     <!-- Main Application -->
     <div id="app-container" class="app-container hidden">
         <!-- Sidebar Navigation -->
-        <nav class="sidebar">
+        <div id="mobile-nav-overlay" class="mobile-nav-overlay"></div>
+        <nav id="sidebar" class="sidebar">
             <div class="sidebar-header">
-                <h1 class="app-title">Bookcall PRO</h1>
+                <h1 class="app-title">BookCaller</h1>
             </div>
             <ul class="sidebar-nav">
                 <li>
                     <a href="#" class="nav-link active" data-page="dashboard">
                         <i data-lucide="layout-dashboard" class="nav-icon"></i>
-                        <span>Dashboard</span>
+                        <span class="nav-text">Dashboard</span>
                     </a>
                 </li>
                 <li>
                     <a href="#" class="nav-link" data-page="marketplace">
                         <i data-lucide="store" class="nav-icon"></i>
-                        <span>Number Marketplace</span>
+                        <span class="nav-text">Number Marketplace</span>
                     </a>
                 </li>
                 <li>
                     <a href="#" class="nav-link" data-page="sessions">
                         <i data-lucide="bot" class="nav-icon"></i>
-                        <span>Sessions</span>
+                        <span class="nav-text">Sessions</span>
                     </a>
                 </li>
                 <li>
                     <a href="#" class="nav-link" data-page="wallet">
                         <i data-lucide="wallet" class="nav-icon"></i>
-                        <span>Wallet</span>
+                        <span class="nav-text">Wallet</span>
                     </a>
                 </li>
                 <li>
                     <a href="#" class="nav-link" data-page="analytics">
                         <i data-lucide="bar-chart-3" class="nav-icon"></i>
-                        <span>Analytics</span>
+                        <span class="nav-text">Analytics</span>
                     </a>
                 </li>
                 <li>
                     <a href="#" class="nav-link" data-page="settings">
                         <i data-lucide="settings" class="nav-icon"></i>
-                        <span>Settings</span>
+                        <span class="nav-text">Settings</span>
                     </a>
                 </li>
             </ul>
@@ -112,7 +113,12 @@
         <div class="main-content">
             <!-- Header -->
             <div class="app-header">
-                <h2 id="page-title" class="page-title">Dashboard</h2>
+                <div class="app-header-main">
+                    <button id="mobile-nav-toggle" class="mobile-nav-toggle" type="button" aria-label="Open navigation menu">
+                        <i data-lucide="menu" class="nav-icon"></i>
+                    </button>
+                    <h2 id="page-title" class="page-title">Dashboard</h2>
+                </div>
                 <div class="header-actions">
                     <div class="wallet-display">
                         <span class="wallet-label">Balance:</span>

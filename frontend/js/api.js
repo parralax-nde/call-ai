@@ -1,5 +1,5 @@
 /**
- * API Client - Bookcall PRO
+ * API Client - BookCaller
  * Handles all communication with the backend API
  */
 

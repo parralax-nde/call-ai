@@ -1,5 +1,5 @@
 /**
- * Bookcall PRO - Main Application Controller
+ * BookCaller - Main Application Controller
  * Handles UI, drawers, and all application logic
  */
 
@@ -15,8 +15,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginForm = $('#login-form');
     const registerForm = $('#register-form');
     const drawerOverlay = $('#drawer-overlay');
+    const mobileNavToggle = $('#mobile-nav-toggle');
+    const mobileNavOverlay = $('#mobile-nav-overlay');
+    const sidebar = $('#sidebar');
 
     let currentPage = 'dashboard';
+
+    function isMobileViewport() {
+        return window.innerWidth <= 960;
+    }
+
+    function closeMobileNav() {
+        if (!sidebar || !mobileNavOverlay) return;
+        sidebar.classList.remove('mobile-open');
+        mobileNavOverlay.classList.remove('active');
+        document.body.classList.remove('nav-open');
+    }
+
+    function openMobileNav() {
+        if (!sidebar || !mobileNavOverlay || !isMobileViewport()) return;
+        sidebar.classList.add('mobile-open');
+        mobileNavOverlay.classList.add('active');
+        document.body.classList.add('nav-open');
+    }
+
+    function toggleMobileNav() {
+        if (!sidebar || !mobileNavOverlay || !isMobileViewport()) return;
+        if (sidebar.classList.contains('mobile-open')) {
+            closeMobileNav();
+            return;
+        }
+        openMobileNav();
+    }
 
     // Date formatter — outputs "Mar 12, 2026" style
     function formatDate(dateStr) {
@@ -37,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showAuth() {
+        closeMobileNav();
         authContainer.classList.remove('hidden');
         appContainer.classList.add('hidden');
     }
@@ -44,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showApp() {
         authContainer.classList.add('hidden');
         appContainer.classList.remove('hidden');
+        closeMobileNav();
         navigateTo('dashboard');
         loadUserData();
     }
@@ -135,6 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
             p.classList.toggle('active', p.id === `page-${page}`);
         });
         $('#page-title').textContent = pageTitles[page] || page;
+        closeMobileNav();
         loadPageData(page);
     }
 
@@ -143,6 +176,26 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             navigateTo(link.dataset.page);
         });
+    });
+
+    if (mobileNavToggle) {
+        mobileNavToggle.addEventListener('click', toggleMobileNav);
+    }
+
+    if (mobileNavOverlay) {
+        mobileNavOverlay.addEventListener('click', closeMobileNav);
+    }
+
+    window.addEventListener('resize', () => {
+        if (!isMobileViewport()) {
+            closeMobileNav();
+        }
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeMobileNav();
+        }
     });
 
     // =====================

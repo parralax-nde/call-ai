@@ -22,7 +22,7 @@ from services.admin.router import router as admin_router
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend")
 
 app = FastAPI(
-    title="Bookcall",
+    title="BookCaller",
     description="Session-based AI calling platform",
     version="0.1.0",
 )
@@ -66,7 +66,7 @@ async def startup_event() -> None:
 
 @app.get("/health")
 async def health_check() -> dict:
-    return {"status": "healthy", "name": "Bookcall", "version": "0.1.0"}
+    return {"status": "healthy", "name": "BookCaller", "version": "0.1.0"}
 
 
 @app.get("/favicon.ico", include_in_schema=False)

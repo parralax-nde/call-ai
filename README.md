@@ -1,6 +1,6 @@
-# AI Call Automator
+# BookCaller
 
-A microservices-based platform for automating AI assistant calls using Telnyx API and voice AI tools.
+A microservices-based platform for AI calling workflows using Telnyx API and voice AI tools.
 
 ## Tech Stack
 
@@ -40,7 +40,7 @@ pip install -r requirements.txt
 # Run the application
 uvicorn main:app --reload
 
-# Access the frontend at http://localhost:8000/app
+# Access the frontend at http://localhost:8000/
 # Access API docs at http://localhost:8000/docs
 ```
 
@@ -54,17 +54,17 @@ docker-compose up -d
 
 The platform includes a built-in web dashboard served by FastAPI. No separate frontend build step is required.
 
-**Access**: Navigate to `http://localhost:8000/app` after starting the server.
+**Access**: Navigate to `http://localhost:8000/` after starting the server.
 
 **Features**:
 - **Authentication** – Register and sign in with email/password
 - **Dashboard** – Real-time call statistics (total, active, completed, failed calls)
 - **Calls** – Initiate new AI-powered calls and view call history
-- **AI Config** – Create and manage prompt templates and AI personas
+- **AI Config** – Create and manage AI session behavior and voices
 - **Scheduler** – Schedule one-time or recurring calls
 - **Settings** – Configure Telnyx credentials, manage your profile, and generate API keys
 
-**Static files** are served from the `frontend/` directory and mounted at `/static`. The SPA entry point is available at `/app`.
+**Static files** are served from the `frontend/` directory and mounted at `/static`. The SPA entry point is available at `/`.
 
 ### Configuration
 

@@ -15,6 +15,7 @@ class TestFrontendRoutes:
         response = client.get("/")
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
+        assert "BookCaller" in response.text
 
     def test_app_subroute_returns_html(self):
         response = client.get("/dashboard")
@@ -36,17 +37,12 @@ class TestFrontendRoutes:
         assert response.status_code == 200
         assert "javascript" in response.headers["content-type"]
 
-    def test_api_root_still_works(self):
-        response = client.get("/")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["name"] == "AI Call Automator"
-        assert data["status"] == "running"
-
     def test_health_still_works(self):
         response = client.get("/health")
         assert response.status_code == 200
-        assert response.json()["status"] == "healthy"
+        data = response.json()
+        assert data["status"] == "healthy"
+        assert data["name"] == "BookCaller"
 
     def test_api_docs_still_accessible(self):
         response = client.get("/docs")
