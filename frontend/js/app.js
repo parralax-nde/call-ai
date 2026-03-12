@@ -266,6 +266,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const countryFilter = $('#country-filter');
         const searchBtn = $('#search-numbers-btn');
 
+        // Load user's purchased numbers
+        await loadMyNumbers();
+
         // Auto-search on page load
         await searchNumbers(areaCodeFilter.value, countryFilter.value);
 
@@ -279,6 +282,51 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    async function loadMyNumbers() {
+        try {
+            const numbers = await API.getUserPhoneNumbers();
+            const list = $('#my-numbers-list');
+            if (numbers.length === 0) {
+                list.innerHTML = '<p class="empty-state">You haven\'t purchased any numbers yet</p>';
+            } else {
+                list.innerHTML = numbers.map(n => `
+                    <div class="number-card">
+                        <div class="number-header">
+                            <div class="number-display">${n.phone_number}</div>
+                            <span class="session-status active">${n.status}</span>
+                        </div>
+                        <div class="number-pricing">
+                            <div class="price-row">
+                                <span class="price-label">Monthly</span>
+                                <span class="price-value">$${n.monthly_price_usd.toFixed(2)}</span>
+                            </div>
+                            <div class="price-row">
+                                <span class="price-label">Purchased</span>
+                                <span class="price-value">${new Date(n.purchased_at).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-danger btn-full" onclick="releaseNumber(${n.id}, '${n.phone_number}')">
+                            Release Number
+                        </button>
+                    </div>
+                `).join('');
+            }
+        } catch (err) {
+            console.error('Error loading my numbers:', err);
+        }
+    }
+
+    window.releaseNumber = async (numberId, phone) => {
+        if (!confirm(`Release ${phone}? This cannot be undone.`)) return;
+        try {
+            await API.cancelPhoneNumber(numberId);
+            alert('Number released successfully');
+            await loadMyNumbers();
+        } catch (err) {
+            alert('Error releasing number: ' + err.message);
+        }
+    };
+
     async function searchNumbers(areaCode, country = 'US') {
         try {
             const numbers = await API.searchAvailableNumbers(areaCode, country);
@@ -288,10 +336,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 list.innerHTML = '<p class="empty-state">No numbers found. Try a different area code or country.</p>';
             } else {
                 list.innerHTML = numbers.map(n => {
-                    const features = (n.features || []).map(f => {
-                        const name = typeof f === 'object' ? f.name : f;
-                        return `<span class="feature-badge">${name}</span>`;
-                    }).join('');
                     const region = n.region_name || '';
                     const cost = n.monthly_cost || 'N/A';
 
@@ -301,7 +345,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="number-display">${n.phone_number}</div>
                             <div class="number-region">${region}</div>
                         </div>
-                        <div class="number-features">${features}</div>
                         <div class="number-pricing">
                             <div class="price-row">
                                 <span class="price-label">Monthly</span>
@@ -338,6 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await API.purchasePhoneNumber(window.pendingPurchase.phone);
             closeDrawer('buy-number');
             alert('Number purchased successfully!');
+            await loadMyNumbers();
             await searchNumbers($('#area-code-filter').value, $('#country-filter').value);
         } catch (err) {
             alert('Purchase failed: ' + err.message);

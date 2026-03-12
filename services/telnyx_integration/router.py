@@ -3,6 +3,9 @@ from sqlalchemy.orm import Session
 
 from shared.auth import get_current_user
 from shared.database import get_db
+from shared.exceptions import UnauthorizedException
+
+from services.billing.service import BillingService
 
 from .schemas import (
     AvailableNumberResponse,
@@ -119,8 +122,14 @@ async def purchase_phone_number(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ) -> UserPhoneNumberResponse:
+    user_id = int(current_user["sub"])
+    # Deduct from wallet (raises BadRequestException if insufficient)
+    billing = BillingService()
+    billing.deduct_wallet_credit(
+        db, user_id, 1.0, f"Phone number purchase: {data.phone_number}"
+    )
     number = await TelnyxService.purchase_phone_number(
-        db, int(current_user["sub"]), data.phone_number,
+        db, user_id, data.phone_number,
     )
     return UserPhoneNumberResponse.model_validate(number)
 
