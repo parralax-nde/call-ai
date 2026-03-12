@@ -1,6 +1,9 @@
+import os
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from shared.database import Base, get_engine
 from shared.exceptions import AppException
@@ -16,6 +19,7 @@ from services.notification.router import router as notification_router
 from services.billing.router import router as billing_router
 from services.admin.router import router as admin_router
 
+FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend")
 
 app = FastAPI(
     title="AI Call Automator",
@@ -72,3 +76,14 @@ async def root() -> dict:
 @app.get("/health")
 async def health_check() -> dict:
     return {"status": "healthy"}
+
+
+# Serve frontend static assets
+app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+
+
+@app.get("/app")
+@app.get("/app/{full_path:path}")
+async def serve_frontend(full_path: str = "") -> FileResponse:
+    """Serve the frontend SPA for all /app routes."""
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))

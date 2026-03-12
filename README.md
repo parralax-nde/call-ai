@@ -5,6 +5,7 @@ A microservices-based platform for automating AI assistant calls using Telnyx AP
 ## Tech Stack
 
 - **Backend**: FastAPI, Python 3.12
+- **Frontend**: Single-page application (vanilla HTML/CSS/JavaScript)
 - **Database**: MySQL (SQLite for development/testing)
 - **Message Queue**: RabbitMQ
 - **API Gateway**: Nginx
@@ -39,6 +40,7 @@ pip install -r requirements.txt
 # Run the application
 uvicorn main:app --reload
 
+# Access the frontend at http://localhost:8000/app
 # Access API docs at http://localhost:8000/docs
 ```
 
@@ -47,6 +49,22 @@ uvicorn main:app --reload
 ```bash
 docker-compose up -d
 ```
+
+### Frontend
+
+The platform includes a built-in web dashboard served by FastAPI. No separate frontend build step is required.
+
+**Access**: Navigate to `http://localhost:8000/app` after starting the server.
+
+**Features**:
+- **Authentication** – Register and sign in with email/password
+- **Dashboard** – Real-time call statistics (total, active, completed, failed calls)
+- **Calls** – Initiate new AI-powered calls and view call history
+- **AI Config** – Create and manage prompt templates and AI personas
+- **Scheduler** – Schedule one-time or recurring calls
+- **Settings** – Configure Telnyx credentials, manage your profile, and generate API keys
+
+**Static files** are served from the `frontend/` directory and mounted at `/static`. The SPA entry point is available at `/app`.
 
 ### Configuration
 
@@ -88,6 +106,12 @@ call-ai/
 │   ├── database.py      # SQLAlchemy setup
 │   ├── exceptions.py    # Custom exceptions
 │   └── schemas.py       # Base schemas/DTOs
+├── frontend/            # Web dashboard (SPA)
+│   ├── index.html       # Main HTML entry point
+│   ├── css/style.css    # Application styles
+│   └── js/
+│       ├── api.js       # API client library
+│       └── app.js       # Application logic & UI controllers
 ├── services/            # Microservices
 │   ├── auth/            # Authentication service
 │   ├── user/            # User management service
