@@ -31,7 +31,9 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)) -> TokenResponse:
     user = auth_service.authenticate_user(db, user_data.email, user_data.password)
     if not user:
         raise UnauthorizedException(detail="Invalid email or password")
-    access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
+    access_token = create_access_token(
+        data={"sub": str(user.id), "email": user.email, "is_admin": user.is_admin}
+    )
     return TokenResponse(access_token=access_token)
 
 
@@ -69,7 +71,9 @@ def google_auth(
         raise BadRequestException(detail="Invalid Google token")
     email = f"{google_id}@gmail.com"
     user = auth_service.get_or_create_google_user(db, google_id, email)
-    access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
+    access_token = create_access_token(
+        data={"sub": str(user.id), "email": user.email, "is_admin": user.is_admin}
+    )
     return TokenResponse(access_token=access_token)
 
 
