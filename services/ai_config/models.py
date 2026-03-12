@@ -16,7 +16,7 @@ class CallSession(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     
     # AI Configuration
-    persona_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    voice: Mapped[str] = mapped_column(String(100), default="Telnyx.Polly.Joanna")
     prompt_template_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     voice_agent_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     

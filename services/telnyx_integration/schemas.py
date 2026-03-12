@@ -66,23 +66,17 @@ class CallStatusUpdate(BaseModel):
 # ===== Marketplace Schemas =====
 
 class AvailableNumberResponse(BaseModel):
-    id: int
     phone_number: str
     country_code: str
-    area_code: str
-    region: str | None
-    monthly_price_usd: float
-    setup_price_usd: float
-    features: str | None
-    is_available: bool
-
-    model_config = {"from_attributes": True}
+    region_name: str | None = None
+    region_type: str | None = None
+    monthly_cost: str | None = None
+    features: list[dict] | None = None
+    vanity_format: str | None = None
 
 
 class PurchaseNumberRequest(BaseModel):
     phone_number: str
-    monthly_price_usd: float = 1.0
-    setup_price_usd: float = 0.0
 
 
 class UserPhoneNumberResponse(BaseModel):

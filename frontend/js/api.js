@@ -115,11 +115,9 @@ const API = {
         return this.request('GET', '/telnyx/user-numbers');
     },
 
-    async purchasePhoneNumber(phoneNumber, monthlyPrice, setupPrice) {
+    async purchasePhoneNumber(phoneNumber) {
         return this.request('POST', '/telnyx/purchase', {
             phone_number: phoneNumber,
-            monthly_price_usd: monthlyPrice,
-            setup_price_usd: setupPrice,
         });
     },
 

@@ -104,25 +104,23 @@ def update_call_status(
 
 
 @router.get("/marketplace/numbers", response_model=list[AvailableNumberResponse])
-def search_available_numbers(
+async def search_available_numbers(
     country: str = Query("US"),
     area_code: str | None = Query(None),
-    db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ) -> list[AvailableNumberResponse]:
-    numbers = TelnyxService.search_available_numbers(db, area_code, country)
-    return [AvailableNumberResponse.model_validate(n) for n in numbers]
+    numbers = await TelnyxService.search_available_numbers(area_code, country)
+    return [AvailableNumberResponse(**n) for n in numbers]
 
 
 @router.post("/purchase", response_model=UserPhoneNumberResponse, status_code=201)
-def purchase_phone_number(
+async def purchase_phone_number(
     data: PurchaseNumberRequest,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ) -> UserPhoneNumberResponse:
-    number = TelnyxService.purchase_phone_number(
-        db, int(current_user["sub"]),
-        data.phone_number, data.monthly_price_usd, data.setup_price_usd,
+    number = await TelnyxService.purchase_phone_number(
+        db, int(current_user["sub"]), data.phone_number,
     )
     return UserPhoneNumberResponse.model_validate(number)
 
@@ -137,10 +135,10 @@ def get_user_phone_numbers(
 
 
 @router.delete("/numbers/{number_id}", response_model=UserPhoneNumberResponse)
-def cancel_phone_number(
+async def cancel_phone_number(
     number_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ) -> UserPhoneNumberResponse:
-    number = TelnyxService.cancel_phone_number(db, int(current_user["sub"]), number_id)
+    number = await TelnyxService.cancel_phone_number(db, int(current_user["sub"]), number_id)
     return UserPhoneNumberResponse.model_validate(number)

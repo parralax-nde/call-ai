@@ -127,7 +127,7 @@ class VersionResponse(BaseModel):
 class SessionCreate(BaseModel):
     name: str
     description: str | None = None
-    persona_id: int | None = None
+    voice: str = "Telnyx.Polly.Joanna"
     prompt_template_id: int | None = None
     target_phone_number: str | None = None
     from_phone_number: str | None = None
@@ -140,7 +140,7 @@ class SessionCreate(BaseModel):
 class SessionUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
-    persona_id: int | None = None
+    voice: str | None = None
     prompt_template_id: int | None = None
     target_phone_number: str | None = None
     from_phone_number: str | None = None
@@ -155,7 +155,7 @@ class SessionResponse(BaseModel):
     user_id: int
     name: str
     description: str | None
-    persona_id: int | None
+    voice: str
     prompt_template_id: int | None
     voice_agent_id: int | None
     target_phone_number: str | None

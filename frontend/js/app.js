@@ -266,7 +266,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const countryFilter = $('#country-filter');
         const searchBtn = $('#search-numbers-btn');
 
-        searchBtn.addEventListener('click', async () => {
+        // Auto-search on page load
+        await searchNumbers(areaCodeFilter.value, countryFilter.value);
+
+        // Remove existing listeners to prevent duplicates
+        const newBtn = searchBtn.cloneNode(true);
+        searchBtn.parentNode.replaceChild(newBtn, searchBtn);
+        newBtn.addEventListener('click', async () => {
             const areaCode = areaCodeFilter.value;
             const country = countryFilter.value;
             await searchNumbers(areaCode, country);
@@ -279,63 +285,60 @@ document.addEventListener('DOMContentLoaded', () => {
             const list = $('#numbers-list');
             
             if (numbers.length === 0) {
-                list.innerHTML = '<p class="empty-state">No numbers found. Try a different search.</p>';
+                list.innerHTML = '<p class="empty-state">No numbers found. Try a different area code or country.</p>';
             } else {
-                list.innerHTML = numbers.map(n => `
+                list.innerHTML = numbers.map(n => {
+                    const features = (n.features || []).map(f => {
+                        const name = typeof f === 'object' ? f.name : f;
+                        return `<span class="feature-badge">${name}</span>`;
+                    }).join('');
+                    const region = n.region_name || '';
+                    const cost = n.monthly_cost || 'N/A';
+
+                    return `
                     <div class="number-card">
                         <div class="number-header">
                             <div class="number-display">${n.phone_number}</div>
-                            <div class="number-region">${n.region || n.area_code}</div>
+                            <div class="number-region">${region}</div>
                         </div>
-                        <div class="number-features">
-                            ${(n.features || []).map(f => `<span class="feature-badge">${f}</span>`).join('')}
-                        </div>
+                        <div class="number-features">${features}</div>
                         <div class="number-pricing">
                             <div class="price-row">
-                                <span class="price-label">Setup Fee</span>
-                                <span class="price-value">$${n.setup_price_usd}</span>
-                            </div>
-                            <div class="price-row">
                                 <span class="price-label">Monthly</span>
-                                <span class="price-value">$${n.monthly_price_usd}</span>
+                                <span class="price-value">${cost}</span>
                             </div>
                         </div>
-                        <button class="btn btn-primary btn-full" onclick="purchaseNumber('${n.phone_number}', ${n.setup_price_usd}, ${n.monthly_price_usd}, '${n.area_code}', '${(n.features || []).join(', ')}')">
+                        <button class="btn btn-primary btn-full" onclick="purchaseNumber('${n.phone_number}', '${region}', '${cost}')">
                             Buy Number
                         </button>
-                    </div>
-                `).join('');
+                    </div>`;
+                }).join('');
             }
         } catch (err) {
             console.error('Search error:', err);
-            $('#numbers-list').innerHTML = '<p class="empty-state">Error loading numbers</p>';
+            $('#numbers-list').innerHTML = `<p class="empty-state">Error: ${err.message}</p>`;
         }
     }
 
-    window.purchaseNumber = (phone, setup, monthly, area, features) => {
+    window.purchaseNumber = (phone, region, cost) => {
         $('#purchase-phone').textContent = phone;
-        $('#purchase-area').textContent = area;
-        $('#purchase-features').textContent = features || 'Standard';
-        $('#purchase-setup').textContent = `$${setup}`;
-        $('#purchase-monthly').textContent = `$${monthly}`;
-        const total = setup + monthly;
-        $('#purchase-total').textContent = `$${total.toFixed(2)}`;
+        $('#purchase-area').textContent = region || '-';
+        $('#purchase-features').textContent = 'Voice, SMS';
+        $('#purchase-setup').textContent = '$0.00';
+        $('#purchase-monthly').textContent = cost;
+        $('#purchase-total').textContent = cost;
         
-        window.pendingPurchase = { phone, setup, monthly };
+        window.pendingPurchase = { phone };
         openDrawer('buy-number');
     };
 
     $('#confirm-purchase-btn').addEventListener('click', async () => {
         if (!window.pendingPurchase) return;
         try {
-            await API.purchasePhoneNumber(
-                window.pendingPurchase.phone,
-                window.pendingPurchase.monthly,
-                window.pendingPurchase.setup
-            );
+            await API.purchasePhoneNumber(window.pendingPurchase.phone);
             closeDrawer('buy-number');
             alert('Number purchased successfully!');
-            await loadMarketplace();
+            await searchNumbers($('#area-code-filter').value, $('#country-filter').value);
         } catch (err) {
             alert('Purchase failed: ' + err.message);
         }
@@ -387,7 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const sessionData = {
                 name,
                 description,
-                persona_id: $('#session-persona').value || null,
+                voice: $('#session-voice').value,
                 prompt_template_id: $('#session-prompt').value || null,
                 from_phone_number: $('#session-phone').value || null,
             };
@@ -417,7 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function clearSessionForm() {
         $('#session-name').value = '';
         $('#session-description').value = '';
-        $('#session-persona').value = '';
+        $('#session-voice').value = 'Telnyx.Polly.Joanna';
         $('#session-prompt').value = '';
         $('#session-phone').value = '';
         $('#session-enable-schedule').checked = false;

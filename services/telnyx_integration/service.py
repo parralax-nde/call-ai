@@ -1,10 +1,12 @@
 import base64
+import json
 from datetime import datetime, timezone
 
+import httpx
 from sqlalchemy.orm import Session
 
 from shared.config import get_settings
-from shared.exceptions import NotFoundException, ConflictException
+from shared.exceptions import BadRequestException, NotFoundException, ConflictException
 
 from .models import CallRecord, TelnyxConfig, UserPhoneNumber, AvailablePhoneNumber, VoiceAgent
 from .schemas import (
@@ -169,56 +171,113 @@ class TelnyxService:
         db.refresh(call_record)
         return call_record
 
-    # ============ Number Marketplace ============
+    # ============ Number Marketplace (Telnyx API) ============
 
     @staticmethod
-    def search_available_numbers(
-        db: Session, area_code: str | None = None, country_code: str = "US"
-    ) -> list[AvailablePhoneNumber]:
-        query = db.query(AvailablePhoneNumber).filter(
-            AvailablePhoneNumber.country_code == country_code,
-            AvailablePhoneNumber.is_available.is_(True),
-        )
+    async def search_available_numbers(
+        area_code: str | None = None, country_code: str = "US"
+    ) -> list[dict]:
+        """Search for available phone numbers via Telnyx API"""
+        settings = get_settings()
+        if not settings.TELNYX_API_KEY:
+            raise BadRequestException(detail="Telnyx API key not configured. Set TELNYX_API_KEY in .env")
+
+        params: dict = {
+            "filter[country_code]": country_code,
+            "filter[limit]": 20,
+            "filter[features]": "sms,voice",
+        }
         if area_code:
-            query = query.filter(AvailablePhoneNumber.area_code == area_code)
-        
-        return query.limit(20).all()
+            params["filter[national_destination_code]"] = area_code
+
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get(
+                f"{settings.TELNYX_API_URL}/available_phone_numbers",
+                params=params,
+                headers={
+                    "Authorization": f"Bearer {settings.TELNYX_API_KEY}",
+                    "Accept": "application/json",
+                },
+            )
+
+        if resp.status_code != 200:
+            raise BadRequestException(
+                detail=f"Telnyx API error: {resp.status_code} - {resp.text[:200]}"
+            )
+
+        data = resp.json().get("data", [])
+        results = []
+        for num in data:
+            results.append({
+                "phone_number": num.get("phone_number", ""),
+                "country_code": num.get("country_code", country_code),
+                "region_name": num.get("region_information", [{}])[0].get("region_name") if num.get("region_information") else None,
+                "region_type": num.get("region_information", [{}])[0].get("region_type") if num.get("region_information") else None,
+                "monthly_cost": num.get("cost_information", {}).get("monthly_cost") if num.get("cost_information") else None,
+                "features": num.get("features", []),
+                "vanity_format": num.get("vanity_format"),
+            })
+        return results
 
     @staticmethod
-    def purchase_phone_number(
-        db: Session, user_id: int, phone_number: str, monthly_price: float, setup_price: float
+    async def purchase_phone_number(
+        db: Session, user_id: int, phone_number: str
     ) -> UserPhoneNumber:
-        """Purchase a phone number for the user"""
-        available = (
-            db.query(AvailablePhoneNumber)
-            .filter(AvailablePhoneNumber.phone_number == phone_number)
-            .first()
-        )
-        if not available or not available.is_available:
-            raise NotFoundException(detail="Phone number not available")
+        """Purchase a phone number via Telnyx API, then save to DB"""
+        settings = get_settings()
+        if not settings.TELNYX_API_KEY:
+            raise BadRequestException(detail="Telnyx API key not configured")
 
+        # Check if already owned locally
         existing = (
             db.query(UserPhoneNumber)
-            .filter(UserPhoneNumber.phone_number == phone_number)
+            .filter(UserPhoneNumber.phone_number == phone_number, UserPhoneNumber.status == "active")
             .first()
         )
         if existing:
             raise ConflictException(detail="Phone number already owned")
 
+        # Create a number order via Telnyx API
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(
+                f"{settings.TELNYX_API_URL}/number_orders",
+                json={
+                    "phone_numbers": [{"phone_number": phone_number}],
+                },
+                headers={
+                    "Authorization": f"Bearer {settings.TELNYX_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+            )
+
+        if resp.status_code not in (200, 201):
+            raise BadRequestException(
+                detail=f"Telnyx purchase failed: {resp.text[:200]}"
+            )
+
+        order_data = resp.json().get("data", {})
+        telnyx_phone_id = None
+        phone_numbers_list = order_data.get("phone_numbers", [])
+        if phone_numbers_list:
+            telnyx_phone_id = phone_numbers_list[0].get("id")
+
+        # Extract area code from phone number (e.g., +12125551234 -> 212)
+        area_code = None
+        clean = phone_number.lstrip("+")
+        if clean.startswith("1") and len(clean) >= 4:
+            area_code = clean[1:4]
+
         user_number = UserPhoneNumber(
             user_id=user_id,
             phone_number=phone_number,
-            area_code=available.area_code,
-            country_code=available.country_code,
-            monthly_price_usd=monthly_price,
-            features=available.features,
+            telnyx_phone_id=telnyx_phone_id,
+            area_code=area_code,
+            country_code="US",
+            monthly_price_usd=1.0,
+            features=json.dumps(["voice", "sms"]),
             status="active",
         )
         db.add(user_number)
-        
-        # Mark as unavailable
-        available.is_available = False
-        
         db.commit()
         db.refresh(user_number)
         return user_number
@@ -237,10 +296,10 @@ class TelnyxService:
         )
 
     @staticmethod
-    def cancel_phone_number(
+    async def cancel_phone_number(
         db: Session, user_id: int, phone_number_id: int
     ) -> UserPhoneNumber:
-        """Cancel/release a phone number"""
+        """Cancel/release a phone number via Telnyx API"""
         number = (
             db.query(UserPhoneNumber)
             .filter(
@@ -252,17 +311,20 @@ class TelnyxService:
         if not number:
             raise NotFoundException(detail="Phone number not found")
 
+        # Try to delete from Telnyx if we have the telnyx_phone_id
+        if number.telnyx_phone_id:
+            settings = get_settings()
+            try:
+                async with httpx.AsyncClient(timeout=15.0) as client:
+                    await client.delete(
+                        f"{settings.TELNYX_API_URL}/phone_numbers/{number.telnyx_phone_id}",
+                        headers={"Authorization": f"Bearer {settings.TELNYX_API_KEY}"},
+                    )
+            except Exception:
+                pass  # Best-effort; still mark locally as cancelled
+
         number.status = "cancelled"
         number.cancelled_at = datetime.now(timezone.utc)
-
-        # Mark as available again
-        available = (
-            db.query(AvailablePhoneNumber)
-            .filter(AvailablePhoneNumber.phone_number == number.phone_number)
-            .first()
-        )
-        if available:
-            available.is_available = True
 
         db.commit()
         db.refresh(number)

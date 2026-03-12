@@ -280,7 +280,7 @@ class AiConfigService:
             user_id=user_id,
             name=data.name,
             description=data.description,
-            persona_id=data.persona_id,
+            voice=data.voice,
             prompt_template_id=data.prompt_template_id,
             target_phone_number=data.target_phone_number,
             from_phone_number=data.from_phone_number,
