@@ -479,3 +479,24 @@ class TestAuthServiceLayer:
         svc = AuthService()
         with pytest.raises(BadRequestException):
             svc.reset_password(db, "", "newpassword1")
+
+
+# ===================================================================
+# 8. Schema / Dependency Validation
+# ===================================================================
+class TestSchemaEmailValidation:
+    """Verify that email-validator is installed and EmailStr works."""
+
+    def test_email_str_schema_can_be_instantiated(self) -> None:
+        from services.auth.schemas import UserRegister
+
+        user = UserRegister(email="valid@example.com", password="securepass1")
+        assert user.email == "valid@example.com"
+
+    def test_email_str_rejects_invalid_email(self) -> None:
+        from pydantic import ValidationError
+
+        from services.auth.schemas import UserRegister
+
+        with pytest.raises(ValidationError):
+            UserRegister(email="not-valid", password="securepass1")
