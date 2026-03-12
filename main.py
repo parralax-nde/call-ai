@@ -64,18 +64,9 @@ async def startup_event() -> None:
     Base.metadata.create_all(bind=engine)
 
 
-@app.get("/")
-async def root() -> dict:
-    return {
-        "name": "Bookcall",
-        "version": "0.1.0",
-        "status": "running",
-    }
-
-
 @app.get("/health")
 async def health_check() -> dict:
-    return {"status": "healthy"}
+    return {"status": "healthy", "name": "Bookcall", "version": "0.1.0"}
 
 
 @app.get("/favicon.ico", include_in_schema=False)
@@ -90,5 +81,5 @@ app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 @app.get("/")
 @app.get("/{full_path:path}")
 async def serve_frontend(full_path: str = "") -> FileResponse:
-    """Serve the frontend SPA for all routes not matched by API."""
+    """Serve the frontend SPA at the domain root."""
     return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
