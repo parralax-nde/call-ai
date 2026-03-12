@@ -87,8 +87,8 @@ async def favicon() -> Response:
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
 
-@app.get("/app")
-@app.get("/app/{full_path:path}")
+@app.get("/")
+@app.get("/{full_path:path}")
 async def serve_frontend(full_path: str = "") -> FileResponse:
-    """Serve the frontend SPA for all /app routes."""
+    """Serve the frontend SPA for all routes not matched by API."""
     return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))

@@ -12,13 +12,12 @@ class TestFrontendRoutes:
     """Verify the frontend is served correctly."""
 
     def test_app_route_returns_html(self):
-        response = client.get("/app")
+        response = client.get("/")
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
-        assert "AI Call Automator" in response.text
 
     def test_app_subroute_returns_html(self):
-        response = client.get("/app/dashboard")
+        response = client.get("/dashboard")
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
 

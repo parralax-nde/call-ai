@@ -434,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function populateSessionPhoneSelect() {
         const phoneSelect = $('#session-phone');
-        phoneSelect.innerHTML = '<option value="">Select a number...</option>';
+        phoneSelect.innerHTML = '<option value="" disabled selected>Loading numbers\u2026</option>';
         try {
             const [numbers, sessions] = await Promise.all([
                 API.getUserPhoneNumbers(),
@@ -444,18 +444,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 sessions.filter(s => s.from_phone_number).map(s => s.from_phone_number)
             );
             const available = numbers.filter(n => n.status === 'active' && !attachedNumbers.has(n.phone_number));
-            available.forEach(n => {
-                const opt = document.createElement('option');
-                opt.value = n.phone_number;
-                opt.textContent = n.phone_number;
-                phoneSelect.appendChild(opt);
-            });
+            phoneSelect.innerHTML = '';
+            if (available.length === 0) {
+                const emptyOpt = document.createElement('option');
+                emptyOpt.value = '';
+                emptyOpt.textContent = 'No available numbers';
+                emptyOpt.disabled = true;
+                emptyOpt.selected = true;
+                phoneSelect.appendChild(emptyOpt);
+            } else {
+                const defaultOpt = document.createElement('option');
+                defaultOpt.value = '';
+                defaultOpt.textContent = 'Select a number\u2026';
+                phoneSelect.appendChild(defaultOpt);
+                available.forEach(n => {
+                    const opt = document.createElement('option');
+                    opt.value = n.phone_number;
+                    opt.textContent = n.phone_number;
+                    phoneSelect.appendChild(opt);
+                });
+            }
             const buyOpt = document.createElement('option');
             buyOpt.value = '__buy_new__';
-            buyOpt.textContent = '＋ Buy a new number…';
+            buyOpt.textContent = '\uff0b Buy a new number\u2026';
             phoneSelect.appendChild(buyOpt);
         } catch (err) {
             console.error('Error loading phone numbers:', err);
+            phoneSelect.innerHTML = '<option value="" disabled selected>Error loading numbers</option>';
         }
     }
 
@@ -482,6 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 description,
                 voice: $('#session-voice').value,
                 from_phone_number: $('#session-phone').value || null,
+                target_phone_number: $('#session-target-phone').value || null,
             };
 
             if ($('#session-enable-schedule').checked) {
@@ -511,6 +527,7 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#session-description').value = '';
         $('#session-voice').value = 'Telnyx.Polly.Joanna';
         $('#session-phone').value = '';
+        $('#session-target-phone').value = '';
         $('#session-enable-schedule').checked = false;
         document.getElementById('scheduling-section').classList.add('hidden');
     }
