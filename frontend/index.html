@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bookcall</title>
+    <title>Bookcall PRO - AI Calling Platform</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css?v=20260312-5">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css?v=20260312">
 </head>
 <body>
     <!-- Auth Pages -->
     <div id="auth-container" class="auth-container">
         <div class="auth-card">
-            <h1 class="auth-title">Bookcall</h1>
-            <p class="auth-subtitle">Launch AI calling sessions from one workspace</p>
+            <div class="auth-logo">
+                <h1>Bookcall PRO</h1>
+                <p>Enterprise AI Voice Agent Platform</p>
+            </div>
 
             <!-- Login Form -->
             <form id="login-form" class="auth-form">
@@ -56,601 +58,328 @@
 
     <!-- Main Application -->
     <div id="app-container" class="app-container hidden">
-        <!-- Sidebar -->
+        <!-- Sidebar Navigation -->
         <nav class="sidebar">
             <div class="sidebar-header">
-                <h2>Bookcall</h2>
+                <h1 class="app-title">Bookcall PRO</h1>
             </div>
             <ul class="sidebar-nav">
                 <li>
                     <a href="#" class="nav-link active" data-page="dashboard">
-                        <span class="nav-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none"><path d="M3 13h8V3H3v10Zm10 8h8V3h-8v18ZM3 21h8v-6H3v6Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </span>
-                        <span class="nav-text">Overview</span>
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12c0-1.1.9-2 2-2h3V7c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2v3h3c1.1 0 2 .9 2 2v8c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2v-8z"/></svg>
+                        <span>Dashboard</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link" data-page="calls">
-                        <span class="nav-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none"><path d="M6.62 10.79a15.9 15.9 0 0 0 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20a1 1 0 0 1-1 1C10.85 21 3 13.15 3 3a1 1 0 0 1 1-1h3.5c.55 0 1 .45 1 1 0 1.24.2 2.45.57 3.57.12.35.03.75-.24 1.02l-2.2 2.2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </span>
-                        <span class="nav-text">Phone Lists</span>
+                    <a href="#" class="nav-link" data-page="marketplace">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 7l-8.97 12.6c-.31.42-.92.42-1.23 0L2 7m18 0H4m18 0c1.1 0 2-.9 2-2s-.9-2-2-2H4c-1.1 0-2 .9-2 2s.9 2 2 2z"/></svg>
+                        <span>Number Marketplace</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link" data-page="contacts">
-                        <span class="nav-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M22 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </span>
-                        <span class="nav-text">Contacts</span>
+                    <a href="#" class="nav-link" data-page="sessions">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v20m-8-8h16M3 4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4z"/></svg>
+                        <span>Sessions</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link" data-page="ai-config">
-                        <span class="nav-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none"><path d="M9 3h6l1 3h3v8h-2v4H7v-4H5V6h3l1-3Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 11h6M10 14h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-                        </span>
-                        <span class="nav-text">Sessions</span>
+                    <a href="#" class="nav-link" data-page="wallet">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 7H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zm-1 8h-6v2h6v-2z"/></svg>
+                        <span>Wallet</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link" data-page="scheduler">
-                        <span class="nav-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none"><path d="M8 2v3M16 2v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </span>
-                        <span class="nav-text">Launch Plan</span>
+                    <a href="#" class="nav-link" data-page="analytics">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18M3 18l5-5 4 4 8-8"/></svg>
+                        <span>Analytics</span>
                     </a>
                 </li>
                 <li>
                     <a href="#" class="nav-link" data-page="settings">
-                        <span class="nav-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8.92 4.6h.08a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.08a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.08a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </span>
-                        <span class="nav-text">Workspace</span>
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6m-14.78 7.78l4.24-4.24m5.08-5.08l4.24-4.24"/></svg>
+                        <span>Settings</span>
                     </a>
                 </li>
             </ul>
             <div class="sidebar-footer">
-                <span id="user-email" class="user-email"></span>
-                <button id="logout-btn" class="btn btn-sm btn-outline">Logout</button>
+                <button id="logout-btn" class="btn btn-secondary btn-full" style="margin-bottom: 10px;">Logout</button>
+                <p class="user-email" id="user-email"></p>
             </div>
         </nav>
 
         <!-- Main Content -->
-        <main class="main-content">
-            <header class="top-bar">
-                <h1 id="page-title">Dashboard</h1>
-                <div id="top-bar-actions"></div>
-            </header>
+        <div class="main-content">
+            <!-- Header -->
+            <div class="app-header">
+                <h2 id="page-title" class="page-title">Dashboard</h2>
+                <div class="header-actions">
+                    <div class="wallet-display">
+                        <span class="wallet-label">Balance:</span>
+                        <span id="wallet-balance" class="wallet-amount">$0.00</span>
+                    </div>
+                    <button id="add-credits-btn" class="btn btn-primary">+ Add Credits</button>
+                </div>
+            </div>
 
-            <div id="page-content" class="page-content">
+            <!-- Pages Container -->
+            <div class="pages-container">
                 <!-- Dashboard Page -->
                 <div id="page-dashboard" class="page active">
-                    <div class="card workflow-card">
-                        <div class="card-header">
-                            <h3>Session Launch Workflow</h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="workflow-steps">
-                                <button class="workflow-step nav-link workflow-link" data-page="settings" type="button">
-                                    <span class="workflow-index">1</span>
-                                    <span class="workflow-copy">
-                                        <strong>Buy Number</strong>
-                                        <small>Choose a number from marketplace at $1/month</small>
-                                    </span>
-                                </button>
-                                <button class="workflow-step nav-link workflow-link" data-page="ai-config" type="button">
-                                    <span class="workflow-index">2</span>
-                                    <span class="workflow-copy">
-                                        <strong>Create Session</strong>
-                                        <small>Compose persona, prompt, and voice behavior</small>
-                                    </span>
-                                </button>
-                                <button class="workflow-step nav-link workflow-link" data-page="contacts" type="button">
-                                    <span class="workflow-index">3</span>
-                                    <span class="workflow-copy">
-                                        <strong>Add Contacts</strong>
-                                        <small>Build phone lists you can launch in sessions</small>
-                                    </span>
-                                </button>
-                                <button class="workflow-step nav-link workflow-link" data-page="scheduler" type="button">
-                                    <span class="workflow-index">4</span>
-                                    <span class="workflow-copy">
-                                        <strong>Set Start Time</strong>
-                                        <small>Schedule when the session starts running</small>
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="stats-grid">
+                    <div class="dashboard-grid">
                         <div class="stat-card">
-                            <div class="stat-top">
-                                <div class="stat-icon" aria-hidden="true">TC</div>
-                                <div class="stat-value" id="stat-total">-</div>
-                            </div>
-                            <div class="stat-label">Total Calls</div>
+                            <div class="stat-value" id="total-sessions">0</div>
+                            <div class="stat-label">Total Sessions</div>
                         </div>
-                        <div class="stat-card stat-active">
-                            <div class="stat-top">
-                                <div class="stat-icon" aria-hidden="true">AC</div>
-                                <div class="stat-value" id="stat-active">-</div>
-                            </div>
-                            <div class="stat-label">Active Calls</div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="active-sessions">0</div>
+                            <div class="stat-label">Active Now</div>
                         </div>
-                        <div class="stat-card stat-completed">
-                            <div class="stat-top">
-                                <div class="stat-icon" aria-hidden="true">OK</div>
-                                <div class="stat-value" id="stat-completed">-</div>
-                            </div>
-                            <div class="stat-label">Completed</div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="phone-count">0</div>
+                            <div class="stat-label">Phone Numbers</div>
                         </div>
-                        <div class="stat-card stat-failed">
-                            <div class="stat-top">
-                                <div class="stat-icon" aria-hidden="true">ER</div>
-                                <div class="stat-value" id="stat-failed">-</div>
-                            </div>
-                            <div class="stat-label">Failed</div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="month-cost">$0</div>
+                            <div class="stat-label">This Month</div>
                         </div>
                     </div>
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>Average Call Duration</h3>
-                        </div>
-                        <div class="card-body">
-                            <p class="big-number" id="stat-avg-duration">0m 0s</p>
-                            <p class="stat-note" id="stat-avg-note">No completed calls yet</p>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>Recent Calls</h3>
-                        </div>
-                        <div class="card-body">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>To</th>
-                                        <th>From</th>
-                                        <th>Status</th>
-                                        <th>Duration</th>
-                                        <th>Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="dashboard-recent-calls">
-                                    <tr><td colspan="5" class="empty-state">Loading...</td></tr>
-                                </tbody>
-                            </table>
+
+                    <div class="dashboard-section">
+                        <h3>Recent Sessions</h3>
+                        <div id="recent-sessions" class="sessions-list">
+                            <p class="empty-state">No sessions yet. <a href="#" data-page="sessions">Create one now</a></p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Calls Page -->
-                <div id="page-calls" class="page">
-                    <div class="page-actions">
-                        <button class="btn btn-primary" id="new-call-btn">+ New Call</button>
-                    </div>
-
-                    <!-- New Call Modal -->
-                    <div id="new-call-modal" class="modal hidden">
-                        <div class="modal-overlay"></div>
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h3>Initiate New Call</h3>
-                                <button class="modal-close">&times;</button>
-                            </div>
-                            <form id="new-call-form">
-                                <div class="form-group">
-                                    <label for="call-to">To Number</label>
-                                    <input type="tel" id="call-to" required placeholder="+1234567890">
-                                </div>
-                                <div class="form-group">
-                                    <label for="call-from">From Number (optional)</label>
-                                    <input type="tel" id="call-from" placeholder="+1234567890">
-                                </div>
-                                <div class="form-group">
-                                    <label for="call-prompt">AI Prompt</label>
-                                    <select id="call-prompt">
-                                        <option value="">-- No prompt --</option>
-                                    </select>
-                                </div>
-                                <div id="call-error" class="form-error"></div>
-                                <div class="modal-actions">
-                                    <button type="button" class="btn btn-outline modal-cancel">Cancel</button>
-                                    <button type="submit" class="btn btn-primary">Start Call</button>
-                                </div>
-                            </form>
+                <!-- Number Marketplace Page -->
+                <div id="page-marketplace" class="page">
+                    <div class="marketplace-header">
+                        <h3>Available Phone Numbers</h3>
+                        <div class="marketplace-filters">
+                            <input type="text" id="area-code-filter" placeholder="Area Code (e.g., 212)" class="form-control">
+                            <select id="country-filter" class="form-control">
+                                <option value="US">United States</option>
+                                <option value="CA">Canada</option>
+                            </select>
+                            <button id="search-numbers-btn" class="btn btn-primary">Search</button>
                         </div>
                     </div>
-
-                    <div class="card">
-                        <div class="card-header"><h3>Call History</h3></div>
-                        <div class="card-body">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>To</th>
-                                        <th>From</th>
-                                        <th>Status</th>
-                                        <th>Duration</th>
-                                        <th>Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="calls-table-body">
-                                    <tr><td colspan="5" class="empty-state">Loading...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div id="numbers-list" class="numbers-grid">
+                        <p class="empty-state">Search available numbers to get started</p>
                     </div>
                 </div>
 
-                <!-- AI Config Page -->
-                <div id="page-ai-config" class="page">
-                    <div class="tabs">
-                        <button class="tab-btn active" data-tab="prompts">Prompts</button>
-                        <button class="tab-btn" data-tab="personas">Personas</button>
+                <!-- Sessions Page -->
+                <div id="page-sessions" class="page">
+                    <div class="sessions-header">
+                        <h3>AI Voice Sessions</h3>
+                        <button id="create-session-btn" class="btn btn-primary">+ New Session</button>
                     </div>
-
-                    <!-- Prompts Tab -->
-                    <div id="tab-prompts" class="tab-content active">
-                        <div class="page-actions">
-                            <button class="btn btn-primary" id="new-prompt-btn">+ New Prompt</button>
-                        </div>
-                        <div id="prompt-modal" class="modal hidden">
-                            <div class="modal-overlay"></div>
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h3 id="prompt-modal-title">Create Prompt</h3>
-                                    <button class="modal-close">&times;</button>
-                                </div>
-                                <form id="prompt-form">
-                                    <input type="hidden" id="prompt-edit-id">
-                                    <div class="form-group">
-                                        <label for="prompt-name">Name</label>
-                                        <input type="text" id="prompt-name" required placeholder="e.g. Customer Support">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="prompt-content">Content</label>
-                                        <textarea id="prompt-content" rows="6" required placeholder="You are a helpful AI assistant..."></textarea>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="prompt-persona">Persona (optional)</label>
-                                        <select id="prompt-persona">
-                                            <option value="">-- None --</option>
-                                        </select>
-                                    </div>
-                                    <div id="prompt-error" class="form-error"></div>
-                                    <div class="modal-actions">
-                                        <button type="button" class="btn btn-outline modal-cancel">Cancel</button>
-                                        <button type="submit" class="btn btn-primary">Save</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                        <div class="card">
-                            <div class="card-body">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Name</th>
-                                            <th>Version</th>
-                                            <th>Active</th>
-                                            <th>Created</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="prompts-table-body">
-                                        <tr><td colspan="5" class="empty-state">Loading...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Personas Tab -->
-                    <div id="tab-personas" class="tab-content">
-                        <div class="page-actions">
-                            <button class="btn btn-primary" id="new-persona-btn">+ New Persona</button>
-                        </div>
-                        <div id="persona-modal" class="modal hidden">
-                            <div class="modal-overlay"></div>
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h3 id="persona-modal-title">Create Persona</h3>
-                                    <button class="modal-close">&times;</button>
-                                </div>
-                                <form id="persona-form">
-                                    <input type="hidden" id="persona-edit-id">
-                                    <div class="form-group">
-                                        <label for="persona-name">Name</label>
-                                        <input type="text" id="persona-name" required placeholder="e.g. Friendly Agent">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="persona-description">Description</label>
-                                        <textarea id="persona-description" rows="3" placeholder="A friendly and helpful assistant..."></textarea>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="persona-tone">Tone</label>
-                                        <select id="persona-tone">
-                                            <option value="professional">Professional</option>
-                                            <option value="friendly">Friendly</option>
-                                            <option value="formal">Formal</option>
-                                            <option value="casual">Casual</option>
-                                        </select>
-                                    </div>
-                                    <div id="persona-error" class="form-error"></div>
-                                    <div class="modal-actions">
-                                        <button type="button" class="btn btn-outline modal-cancel">Cancel</button>
-                                        <button type="submit" class="btn btn-primary">Save</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                        <div class="card">
-                            <div class="card-body">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Name</th>
-                                            <th>Tone</th>
-                                            <th>Description</th>
-                                            <th>Created</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="personas-table-body">
-                                        <tr><td colspan="5" class="empty-state">Loading...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                    <div id="sessions-list" class="sessions-list">
+                        <p class="empty-state">No sessions created yet</p>
                     </div>
                 </div>
 
-                <!-- Scheduler Page -->
-                <div id="page-scheduler" class="page">
-                    <div class="page-actions">
-                        <button class="btn btn-primary" id="new-schedule-btn">+ Schedule Call</button>
-                    </div>
-                    <div id="schedule-modal" class="modal hidden">
-                        <div class="modal-overlay"></div>
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h3>Schedule a Call</h3>
-                                <button class="modal-close">&times;</button>
-                            </div>
-                            <form id="schedule-form">
-                                <div class="form-group">
-                                    <label for="schedule-to">To Number</label>
-                                    <input type="tel" id="schedule-to" required placeholder="+1234567890">
-                                </div>
-                                <div class="form-group">
-                                    <label for="schedule-at">Scheduled At</label>
-                                    <input type="datetime-local" id="schedule-at" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="schedule-recurrence">Recurrence (optional)</label>
-                                    <select id="schedule-recurrence">
-                                        <option value="">One-time</option>
-                                        <option value="daily">Daily</option>
-                                        <option value="weekly">Weekly</option>
-                                        <option value="monthly">Monthly</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="schedule-prompt">AI Prompt (optional)</label>
-                                    <select id="schedule-prompt">
-                                        <option value="">-- No prompt --</option>
-                                    </select>
-                                </div>
-                                <div id="schedule-error" class="form-error"></div>
-                                <div class="modal-actions">
-                                    <button type="button" class="btn btn-outline modal-cancel">Cancel</button>
-                                    <button type="submit" class="btn btn-primary">Schedule</button>
-                                </div>
-                            </form>
+                <!-- Wallet Page -->
+                <div id="page-wallet" class="page">
+                    <div class="wallet-section">
+                        <div class="wallet-card">
+                            <div class="wallet-card-title">Wallet Balance</div>
+                            <div class="wallet-card-amount" id="wallet-balance-large">$0.00</div>
+                            <button id="add-credits-drawer-btn" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Add Credits</button>
                         </div>
                     </div>
-                    <div class="card">
-                        <div class="card-header"><h3>Scheduled Calls</h3></div>
-                        <div class="card-body">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>To</th>
-                                        <th>Scheduled At</th>
-                                        <th>Recurrence</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="schedule-table-body">
-                                    <tr><td colspan="5" class="empty-state">Loading...</td></tr>
-                                </tbody>
-                            </table>
+                    <h4>Transaction History</h4>
+                    <div id="transactions-list" class="transactions-table">
+                        <p class="empty-state">No transactions yet</p>
+                    </div>
+                </div>
+
+                <!-- Analytics Page -->
+                <div id="page-analytics" class="page">
+                    <div class="analytics-grid">
+                        <div class="chart-placeholder">
+                            <h4>Call Volume</h4>
+                            <p>Chart coming soon</p>
+                        </div>
+                        <div class="chart-placeholder">
+                            <h4>Cost Breakdown</h4>
+                            <p>Chart coming soon</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Settings Page -->
-                <div id="page-contacts" class="page">
-                    <div class="card contacts-hero-card">
-                        <div class="card-body contacts-hero-body">
-                            <div>
-                                <h3>Contact Lists</h3>
-                                <p class="stat-note">Create your outreach list once, then launch sessions using these saved contacts.</p>
-                            </div>
-                            <button class="btn btn-primary" id="new-contact-btn">+ Add Contact</button>
-                        </div>
-                    </div>
-
-                    <div id="contact-modal" class="modal hidden">
-                        <div class="modal-overlay"></div>
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h3 id="contact-modal-title">Add Contact</h3>
-                                <button class="modal-close">&times;</button>
-                            </div>
-                            <form id="contact-form">
-                                <input type="hidden" id="contact-edit-id">
-                                <div class="form-group">
-                                    <label for="contact-name">Full Name</label>
-                                    <input type="text" id="contact-name" required placeholder="e.g. Jane Doe">
-                                </div>
-                                <div class="form-group">
-                                    <label for="contact-phone">Phone Number</label>
-                                    <input type="tel" id="contact-phone" required placeholder="+1234567890">
-                                </div>
-                                <div class="form-group">
-                                    <label for="contact-email">Email (optional)</label>
-                                    <input type="email" id="contact-email" placeholder="jane@company.com">
-                                </div>
-                                <div class="form-group">
-                                    <label for="contact-tags">Tags (comma separated)</label>
-                                    <input type="text" id="contact-tags" placeholder="vip, east-coast, warm-lead">
-                                </div>
-                                <div class="form-group">
-                                    <label for="contact-notes">Notes</label>
-                                    <textarea id="contact-notes" rows="3" placeholder="Context for this contact"></textarea>
-                                </div>
-                                <div id="contact-error" class="form-error"></div>
-                                <div class="modal-actions">
-                                    <button type="button" class="btn btn-outline modal-cancel">Cancel</button>
-                                    <button type="submit" class="btn btn-primary">Save Contact</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header"><h3>All Contacts</h3></div>
-                        <div class="card-body">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Phone</th>
-                                        <th>Email</th>
-                                        <th>Tags</th>
-                                        <th>Created</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="contacts-table-body">
-                                    <tr><td colspan="6" class="empty-state">Loading...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
                 <div id="page-settings" class="page">
-                    <div class="settings-grid">
-                        <!-- Number Marketplace -->
-                        <div class="card">
-                            <div class="card-header"><h3>Number Marketplace</h3></div>
-                            <div class="card-body">
-                                <p class="stat-note">Every number is billed at <strong>$1.00 / month</strong>. Buy one or multiple numbers for different sessions.</p>
-                                <div id="number-marketplace-grid" class="number-marketplace-grid"></div>
-                                <div id="number-marketplace-empty" class="empty-state hidden">No numbers available right now.</div>
-                            </div>
+                    <div class="settings-form">
+                        <h3>Account Settings</h3>
+                        <div class="form-group">
+                            <label for="settings-email">Email</label>
+                            <input type="email" id="settings-email" disabled>
                         </div>
-
-                        <div class="card">
-                            <div class="card-header"><h3>My Numbers</h3></div>
-                            <div class="card-body">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Number</th>
-                                            <th>Price</th>
-                                            <th>Status</th>
-                                            <th>Purchased</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="owned-numbers-table-body">
-                                        <tr><td colspan="4" class="empty-state">Loading...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                        <div class="form-group">
+                            <label for="settings-name">Full Name</label>
+                            <input type="text" id="settings-name" placeholder="Your name">
                         </div>
-
-                        <!-- Profile -->
-                        <div class="card">
-                            <div class="card-header"><h3>Profile</h3></div>
-                            <div class="card-body">
-                                <form id="profile-form">
-                                    <div class="form-group">
-                                        <label for="profile-name">Full Name</label>
-                                        <input type="text" id="profile-name" placeholder="Your full name">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="profile-phone">Phone Number</label>
-                                        <input type="tel" id="profile-phone" placeholder="+1234567890">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="profile-timezone">Timezone</label>
-                                        <select id="profile-timezone">
-                                            <option value="UTC">UTC</option>
-                                            <option value="US/Eastern">US/Eastern</option>
-                                            <option value="US/Central">US/Central</option>
-                                            <option value="US/Pacific">US/Pacific</option>
-                                            <option value="Europe/London">Europe/London</option>
-                                            <option value="Europe/Berlin">Europe/Berlin</option>
-                                            <option value="Asia/Tokyo">Asia/Tokyo</option>
-                                            <option value="Africa/Nairobi">Africa/Nairobi</option>
-                                        </select>
-                                    </div>
-                                    <div id="profile-error" class="form-error"></div>
-                                    <div id="profile-success" class="form-success hidden"></div>
-                                    <button type="submit" class="btn btn-primary">Update Profile</button>
-                                </form>
-                            </div>
+                        <div class="form-group">
+                            <label for="settings-timezone">Timezone</label>
+                            <select id="settings-timezone">
+                                <option value="UTC">UTC</option>
+                                <option value="America/New_York">Eastern Time</option>
+                                <option value="America/Chicago">Central Time</option>
+                                <option value="America/Denver">Mountain Time</option>
+                                <option value="America/Los_Angeles">Pacific Time</option>
+                            </select>
                         </div>
-
-                        <!-- API Keys -->
-                        <div class="card">
-                            <div class="card-header">
-                                <h3>API Keys</h3>
-                                <button class="btn btn-sm btn-primary" id="new-api-key-btn">+ New Key</button>
-                            </div>
-                            <div class="card-body">
-                                <div id="new-api-key-form-container" class="hidden">
-                                    <form id="api-key-form" class="inline-form">
-                                        <input type="text" id="api-key-name" placeholder="Key name" required>
-                                        <button type="submit" class="btn btn-sm btn-primary">Create</button>
-                                        <button type="button" class="btn btn-sm btn-outline" id="cancel-api-key">Cancel</button>
-                                    </form>
-                                    <div id="api-key-created" class="api-key-display hidden">
-                                        <p>Your new API key (copy it now, it won't be shown again):</p>
-                                        <code id="api-key-value"></code>
-                                    </div>
-                                </div>
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Name</th>
-                                            <th>Prefix</th>
-                                            <th>Status</th>
-                                            <th>Created</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="api-keys-table-body">
-                                        <tr><td colspan="5" class="empty-state">Loading...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        <button id="save-settings-btn" class="btn btn-primary">Save Settings</button>
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
+
+        <!-- Drawers (Side Panels) -->
+        <div id="drawer-overlay" class="drawer-overlay"></div>
+
+        <!-- Add Credits Drawer -->
+        <div id="drawer-add-credits" class="drawer">
+            <div class="drawer-header">
+                <h3>Add Credits to Wallet</h3>
+                <button class="drawer-close" aria-label="Close drawer">&times;</button>
+            </div>
+            <div class="drawer-content">
+                <div class="form-group">
+                    <label for="credit-amount">Amount (USD)</label>
+                    <input type="number" id="credit-amount" placeholder="100.00" min="1" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="payment-method">Payment Method</label>
+                    <select id="payment-method">
+                        <option value="card">Credit Card</option>
+                        <option value="mpesa">M-Pesa</option>
+                        <option value="pesapal">PesaPal</option>
+                    </select>
+                </div>
+                <button id="proceed-payment-btn" class="btn btn-primary btn-full">Proceed to Payment</button>
+            </div>
+        </div>
+
+        <!-- Create/Edit Session Drawer -->
+        <div id="drawer-session" class="drawer">
+            <div class="drawer-header">
+                <h3>Create AI Voice Session</h3>
+                <button class="drawer-close" aria-label="Close drawer">&times;</button>
+            </div>
+            <div class="drawer-content">
+                <div class="form-group">
+                    <label for="session-name">Session Name</label>
+                    <input type="text" id="session-name" placeholder="e.g., Customer Support Bot">
+                </div>
+                <div class="form-group">
+                    <label for="session-description">Description</label>
+                    <textarea id="session-description" placeholder="Describe the purpose of this session" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="session-persona">AI Persona</label>
+                    <select id="session-persona">
+                        <option value="">Select a persona...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="session-prompt">Prompt Template</label>
+                    <select id="session-prompt">
+                        <option value="">Select a template...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="session-phone">From Phone Number</label>
+                    <select id="session-phone">
+                        <option value="">Select a number...</option>
+                    </select>
+                </div>
+
+                <div class="section-divider"></div>
+                <h4>Scheduling (Optional)</h4>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="session-enable-schedule"> Enable Scheduling
+                    </label>
+                </div>
+
+                <div id="scheduling-section" class="hidden">
+                    <div class="form-group">
+                        <label for="session-schedule-date">Start Date & Time</label>
+                        <input type="datetime-local" id="session-schedule-date">
+                    </div>
+                    <div class="form-group">
+                        <label for="session-recurrence">Recurrence</label>
+                        <select id="session-recurrence">
+                            <option value="">Do not repeat</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="session-recurrence-end">End Date (for recurring)</label>
+                        <input type="datetime-local" id="session-recurrence-end">
+                    </div>
+                </div>
+
+                <div class="drawer-actions">
+                    <button id="cancel-session-btn" class="btn btn-secondary">Cancel</button>
+                    <button id="create-session-submit-btn" class="btn btn-primary">Create Session</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Number Purchase Drawer -->
+        <div id="drawer-buy-number" class="drawer">
+            <div class="drawer-header">
+                <h3>Confirm Purchase</h3>
+                <button class="drawer-close" aria-label="Close drawer">&times;</button>
+            </div>
+            <div class="drawer-content">
+                <div class="purchase-details">
+                    <div class="detail-row">
+                        <span class="label">Phone Number:</span>
+                        <span id="purchase-phone" class="value"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Area Code:</span>
+                        <span id="purchase-area" class="value"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Features:</span>
+                        <span id="purchase-features" class="value"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Setup Fee:</span>
+                        <span id="purchase-setup" class="value"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Monthly Cost:</span>
+                        <span id="purchase-monthly" class="value"></span>
+                    </div>
+                    <div class="detail-row total">
+                        <span class="label">Total Cost:</span>
+                        <span id="purchase-total" class="value"></span>
+                    </div>
+                </div>
+                <div class="purchase-warning">
+                    <p>This amount will be deducted from your wallet balance.</p>
+                </div>
+                <div class="drawer-actions">
+                    <button id="cancel-purchase-btn" class="btn btn-secondary">Cancel</button>
+                    <button id="confirm-purchase-btn" class="btn btn-success">Complete Purchase</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script src="/static/js/api.js?v=20260312-5"></script>
-    <script src="/static/js/app.js?v=20260312-5"></script>
+    <!-- Scripts -->
+    <script src="/static/js/api.js?v=20260312"></script>
+    <script src="/static/js/app.js?v=20260312"></script>
 </body>
 </html>

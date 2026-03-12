@@ -4,9 +4,9 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from shared.config import get_settings
-from shared.exceptions import NotFoundException
+from shared.exceptions import NotFoundException, ConflictException
 
-from .models import CallRecord, TelnyxConfig
+from .models import CallRecord, TelnyxConfig, UserPhoneNumber, AvailablePhoneNumber, VoiceAgent
 from .schemas import (
     CallStatusUpdate,
     InitiateCallRequest,
@@ -170,3 +170,151 @@ class TelnyxService:
         db.commit()
         db.refresh(call_record)
         return call_record
+
+    # ============ Number Marketplace ============
+
+    @staticmethod
+    def search_available_numbers(
+        db: Session, area_code: str | None = None, country_code: str = "US"
+    ) -> list[AvailablePhoneNumber]:
+        query = db.query(AvailablePhoneNumber).filter(
+            AvailablePhoneNumber.country_code == country_code,
+            AvailablePhoneNumber.is_available.is_(True),
+        )
+        if area_code:
+            query = query.filter(AvailablePhoneNumber.area_code == area_code)
+        
+        return query.limit(20).all()
+
+    @staticmethod
+    def purchase_phone_number(
+        db: Session, user_id: int, phone_number: str, monthly_price: float, setup_price: float
+    ) -> UserPhoneNumber:
+        """Purchase a phone number for the user"""
+        available = (
+            db.query(AvailablePhoneNumber)
+            .filter(AvailablePhoneNumber.phone_number == phone_number)
+            .first()
+        )
+        if not available or not available.is_available:
+            raise NotFoundException(detail="Phone number not available")
+
+        existing = (
+            db.query(UserPhoneNumber)
+            .filter(UserPhoneNumber.phone_number == phone_number)
+            .first()
+        )
+        if existing:
+            raise ConflictException(detail="Phone number already owned")
+
+        user_number = UserPhoneNumber(
+            user_id=user_id,
+            phone_number=phone_number,
+            area_code=available.area_code,
+            country_code=available.country_code,
+            monthly_price_usd=monthly_price,
+            features=available.features,
+            status="active",
+        )
+        db.add(user_number)
+        
+        # Mark as unavailable
+        available.is_available = False
+        
+        db.commit()
+        db.refresh(user_number)
+        return user_number
+
+    @staticmethod
+    def get_user_phone_numbers(
+        db: Session, user_id: int
+    ) -> list[UserPhoneNumber]:
+        return (
+            db.query(UserPhoneNumber)
+            .filter(
+                UserPhoneNumber.user_id == user_id,
+                UserPhoneNumber.status == "active",
+            )
+            .all()
+        )
+
+    @staticmethod
+    def cancel_phone_number(
+        db: Session, user_id: int, phone_number_id: int
+    ) -> UserPhoneNumber:
+        """Cancel/release a phone number"""
+        number = (
+            db.query(UserPhoneNumber)
+            .filter(
+                UserPhoneNumber.id == phone_number_id,
+                UserPhoneNumber.user_id == user_id,
+            )
+            .first()
+        )
+        if not number:
+            raise NotFoundException(detail="Phone number not found")
+
+        number.status = "cancelled"
+        number.cancelled_at = datetime.now(timezone.utc)
+
+        # Mark as available again
+        available = (
+            db.query(AvailablePhoneNumber)
+            .filter(AvailablePhoneNumber.phone_number == number.phone_number)
+            .first()
+        )
+        if available:
+            available.is_available = True
+
+        db.commit()
+        db.refresh(number)
+        return number
+
+    # ============ Voice Agent Management ============
+
+    @staticmethod
+    def create_voice_agent(
+        db: Session,
+        user_id: int,
+        session_id: int,
+        telnyx_agent_id: str,
+        phone_number: str | None = None,
+        ai_persona_id: int | None = None,
+    ) -> VoiceAgent:
+        """Create a voice agent linked to a session"""
+        agent = VoiceAgent(
+            user_id=user_id,
+            session_id=session_id,
+            telnyx_agent_id=telnyx_agent_id,
+            phone_number=phone_number,
+            status="created",
+            ai_persona_id=ai_persona_id,
+        )
+        db.add(agent)
+        db.commit()
+        db.refresh(agent)
+        return agent
+
+    @staticmethod
+    def get_voice_agent(db: Session, agent_id: int) -> VoiceAgent:
+        agent = db.query(VoiceAgent).filter(VoiceAgent.id == agent_id).first()
+        if not agent:
+            raise NotFoundException(detail="Voice agent not found")
+        return agent
+
+    @staticmethod
+    def get_session_voice_agent(db: Session, session_id: int) -> VoiceAgent | None:
+        return db.query(VoiceAgent).filter(VoiceAgent.session_id == session_id).first()
+
+    @staticmethod
+    def update_voice_agent_status(
+        db: Session, agent_id: int, status: str
+    ) -> VoiceAgent:
+        agent = db.query(VoiceAgent).filter(VoiceAgent.id == agent_id).first()
+        if not agent:
+            raise NotFoundException(detail="Voice agent not found")
+
+        agent.status = status
+        db.commit()
+        db.refresh(agent)
+        return agent

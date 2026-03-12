@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from shared.exceptions import BadRequestException, ConflictException, NotFoundException
 
-from .models import Invoice, Payment, SubscriptionPlan, UsageRecord, UserSubscription
+from .models import Invoice, Payment, SubscriptionPlan, UsageRecord, UserSubscription, UserWallet, WalletTransaction
 from .schemas import (
     PaymentCreate,
     PesapalCallback,
@@ -348,6 +348,87 @@ class BillingService:
         if not invoice:
             raise NotFoundException(detail="Invoice not found")
         return invoice
+
+    # ============ Wallet Management ============
+
+    @staticmethod
+    def get_or_create_wallet(db: Session, user_id: int) -> UserWallet:
+        wallet = db.query(UserWallet).filter(UserWallet.user_id == user_id).first()
+        if not wallet:
+            wallet = UserWallet(user_id=user_id, balance=0.0)
+            db.add(wallet)
+            db.commit()
+            db.refresh(wallet)
+        return wallet
+
+    @staticmethod
+    def get_wallet_balance(db: Session, user_id: int) -> float:
+        wallet = BillingService.get_or_create_wallet(db, user_id)
+        return wallet.balance
+
+    @staticmethod
+    def add_wallet_credit(
+        db: Session, user_id: int, amount: float, description: str, reference_id: str | None = None
+    ) -> WalletTransaction:
+        """Add credit to user's wallet"""
+        wallet = BillingService.get_or_create_wallet(db, user_id)
+        wallet.balance += amount
+        wallet.total_recharged += amount
+
+        transaction = WalletTransaction(
+            user_id=user_id,
+            transaction_type="credit",
+            amount=amount,
+            description=description,
+            reference_id=reference_id,
+            balance_after=wallet.balance,
+        )
+        db.add(transaction)
+        db.commit()
+        db.refresh(wallet)
+        db.refresh(transaction)
+        return transaction
+
+    @staticmethod
+    def deduct_wallet_credit(
+        db: Session, user_id: int, amount: float, description: str, reference_id: str | None = None
+    ) -> WalletTransaction:
+        """Deduct credit from user's wallet"""
+        wallet = BillingService.get_or_create_wallet(db, user_id)
+        if wallet.balance < amount:
+            raise BadRequestException(
+                detail=f"Insufficient wallet balance. Required: ${amount}, Available: ${wallet.balance}"
+            )
+        
+        wallet.balance -= amount
+        wallet.total_spent += amount
+
+        transaction = WalletTransaction(
+            user_id=user_id,
+            transaction_type="debit",
+            amount=amount,
+            description=description,
+            reference_id=reference_id,
+            balance_after=wallet.balance,
+        )
+        db.add(transaction)
+        db.commit()
+        db.refresh(wallet)
+        db.refresh(transaction)
+        return transaction
+
+    @staticmethod
+    def get_wallet_transactions(
+        db: Session, user_id: int, skip: int = 0, limit: int = 50
+    ) -> list[WalletTransaction]:
+        return (
+            db.query(WalletTransaction)
+            .filter(WalletTransaction.user_id == user_id)
+            .order_by(WalletTransaction.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     @staticmethod
     def calculate_cost(usage_type: str, quantity: float) -> float:

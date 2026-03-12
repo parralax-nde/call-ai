@@ -1,18 +1,25 @@
 /**
- * Main application controller for the AI Call Automator frontend.
+ * Bookcall PRO - Main Application Controller
+ * Handles UI, drawers, and all application logic
  */
+
 document.addEventListener('DOMContentLoaded', () => {
     const $ = (sel) => document.querySelector(sel);
     const $$ = (sel) => document.querySelectorAll(sel);
 
-    // --- Elements ---
+    // =====================
+    // STATE & ELEMENTS
+    // =====================
     const authContainer = $('#auth-container');
     const appContainer = $('#app-container');
     const loginForm = $('#login-form');
     const registerForm = $('#register-form');
+    const drawerOverlay = $('#drawer-overlay');
+
+    let currentPage = 'dashboard';
 
     // =====================
-    // Auth State
+    // AUTH FUNCTIONS
     // =====================
     function checkAuth() {
         if (API.getToken()) {
@@ -31,15 +38,17 @@ document.addEventListener('DOMContentLoaded', () => {
         authContainer.classList.add('hidden');
         appContainer.classList.remove('hidden');
         navigateTo('dashboard');
+        loadUserData();
     }
 
-    // If token expires, return to auth screen without hard page reload.
     window.addEventListener('auth:unauthorized', () => {
         localStorage.removeItem('user_email');
         showAuth();
     });
 
-    // --- Auth form toggling ---
+    // =====================
+    // AUTH FORM HANDLERS
+    // =====================
     $('#show-register').addEventListener('click', (e) => {
         e.preventDefault();
         loginForm.classList.add('hidden');
@@ -52,10 +61,8 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.classList.remove('hidden');
     });
 
-    // --- Login ---
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const stopLoading = startButtonLoading(e.submitter || loginForm.querySelector('button[type="submit"]'), 'Signing In...');
         const errorEl = $('#login-error');
         errorEl.textContent = '';
         const email = $('#login-email').value;
@@ -66,15 +73,11 @@ document.addEventListener('DOMContentLoaded', () => {
             showApp();
         } catch (err) {
             errorEl.textContent = err.message;
-        } finally {
-            stopLoading();
         }
     });
 
-    // --- Register ---
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const stopLoading = startButtonLoading(e.submitter || registerForm.querySelector('button[type="submit"]'), 'Creating...');
         const errorEl = $('#register-error');
         errorEl.textContent = '';
         const email = $('#register-email').value;
@@ -82,7 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const confirm = $('#register-confirm').value;
         if (password !== confirm) {
             errorEl.textContent = 'Passwords do not match';
-            stopLoading();
             return;
         }
         try {
@@ -92,50 +94,40 @@ document.addEventListener('DOMContentLoaded', () => {
             showApp();
         } catch (err) {
             errorEl.textContent = err.message;
-        } finally {
-            stopLoading();
         }
     });
 
-    // --- Logout ---
     $('#logout-btn').addEventListener('click', async () => {
-        const button = $('#logout-btn');
-        const stopLoading = startButtonLoading(button, 'Logging out...');
         try {
             await API.logout();
             localStorage.removeItem('user_email');
             showAuth();
-        } finally {
-            stopLoading();
+        } catch (err) {
+            console.error('Logout error:', err);
         }
     });
 
     // =====================
-    // Navigation
+    // NAVIGATION
     // =====================
     const pageTitles = {
-        dashboard: 'Overview',
-        calls: 'Phone Lists',
-        contacts: 'Contacts',
-        'ai-config': 'Sessions',
-        scheduler: 'Launch Plan',
-        settings: 'Workspace',
+        dashboard: 'Dashboard',
+        marketplace: 'Number Marketplace',
+        sessions: 'AI Voice Sessions',
+        wallet: 'Wallet & Billing',
+        analytics: 'Analytics',
+        settings: 'Settings',
     };
 
     function navigateTo(page) {
-        // Update nav
+        currentPage = page;
         $$('.nav-link').forEach((link) => {
             link.classList.toggle('active', link.dataset.page === page);
         });
-        // Update pages
         $$('.page').forEach((p) => {
             p.classList.toggle('active', p.id === `page-${page}`);
         });
-        // Update title
         $('#page-title').textContent = pageTitles[page] || page;
-        // Update user email display
-        $('#user-email').textContent = localStorage.getItem('user_email') || '';
-        // Load page data
         loadPageData(page);
     }
 
@@ -146,807 +138,379 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    $$('.workflow-link').forEach((link) => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            navigateTo(link.dataset.page);
+    // =====================
+    // DRAWER MANAGEMENT
+    // =====================
+    const drawers = {};
+
+    function openDrawer(drawerId) {
+        const drawer = $(`#drawer-${drawerId}`);
+        if (drawer) {
+            drawer.classList.add('active');
+            drawerOverlay.classList.add('active');
+        }
+    }
+
+    function closeDrawer(drawerId) {
+        const drawer = $(`#drawer-${drawerId}`);
+        if (drawer) {
+            drawer.classList.remove('active');
+            drawerOverlay.classList.remove('active');
+        }
+    }
+
+    function closeAllDrawers() {
+        $$('.drawer').forEach(d => d.classList.remove('active'));
+        drawerOverlay.classList.remove('active');
+    }
+
+    // Close drawer with overlay click
+    drawerOverlay.addEventListener('click', closeAllDrawers);
+
+    // Close drawer with close button
+    $$('.drawer-close').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const drawer = e.target.closest('.drawer');
+            drawer.classList.remove('active');
+            drawerOverlay.classList.remove('active');
         });
     });
 
     // =====================
-    // Data Loading
+    // PAGE DATA LOADING
     // =====================
-    function loadPageData(page) {
-        switch (page) {
-            case 'dashboard': loadDashboard(); break;
-            case 'calls': loadCalls(); break;
-            case 'contacts': loadContactsPage(); break;
-            case 'ai-config': loadPrompts(); loadPersonas(); break;
-            case 'scheduler': loadScheduledCalls(); break;
-            case 'settings': loadSettings(); break;
+    async function loadUserData() {
+        try {
+            $('#user-email').textContent = localStorage.getItem('user_email') || '';
+            const wallet = await API.getWalletBalance();
+            updateWalletDisplay(wallet);
+            loadPageData(currentPage);
+        } catch (err) {
+            console.error('Error loading user data:', err);
+        }
+    }
+
+    function updateWalletDisplay(balance) {
+        const formatted = `$${balance.toFixed(2)}`;
+        $('#wallet-balance').textContent = formatted;
+        $('#wallet-balance-large').textContent = formatted;
+    }
+
+    async function loadPageData(page) {
+        try {
+            switch (page) {
+                case 'dashboard':
+                    await loadDashboard();
+                    break;
+                case 'marketplace':
+                    await loadMarketplace();
+                    break;
+                case 'sessions':
+                    await loadSessions();
+                    break;
+                case 'wallet':
+                    await loadWallet();
+                    break;
+                case 'analytics':
+                    await loadAnalytics();
+                    break;
+                case 'settings':
+                    await loadSettings();
+                    break;
+            }
+        } catch (err) {
+            console.error(`Error loading ${page}:`, err);
         }
     }
 
     // =====================
-    // Helpers
-    // =====================
-    function formatDate(dateStr) {
-        if (!dateStr) return '-';
-        return new Date(dateStr).toLocaleString();
-    }
-
-    function formatDuration(seconds) {
-        if (seconds == null) return '-';
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        return `${m}m ${s}s`;
-    }
-
-    function statusBadge(status) {
-        if (!status) return '<span class="badge">-</span>';
-        const s = status.toLowerCase();
-        let cls = 'badge';
-        if (['active', 'initiated', 'in_progress', 'pending', 'ringing'].includes(s)) cls += ' badge-active';
-        else if (['completed', 'answered', 'success'].includes(s)) cls += ' badge-completed';
-        else if (['failed', 'cancelled', 'error', 'no_answer'].includes(s)) cls += ' badge-failed';
-        else if (['scheduled'].includes(s)) cls += ' badge-scheduled';
-        return `<span class="${cls}">${status}</span>`;
-    }
-
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    function renderTags(tags) {
-        if (!tags || tags.length === 0) return '<span class="tag-chip muted">none</span>';
-        return tags.map((tag) => `<span class="tag-chip">${escapeHtml(tag)}</span>`).join(' ');
-    }
-
-    function startButtonLoading(button, loadingText = 'Loading...') {
-        if (!button) return () => {};
-        const originalText = button.textContent;
-        button.dataset.originalText = originalText;
-        button.textContent = loadingText;
-        button.classList.add('is-loading');
-        button.disabled = true;
-        return () => {
-            button.disabled = false;
-            button.classList.remove('is-loading');
-            button.textContent = button.dataset.originalText || originalText;
-        };
-    }
-
-    // =====================
-    // Dashboard
+    // DASHBOARD PAGE
     // =====================
     async function loadDashboard() {
         try {
             const stats = await API.getDashboardStats();
-            $('#stat-total').textContent = stats.total_calls ?? 0;
-            $('#stat-active').textContent = stats.active_calls ?? 0;
-            $('#stat-completed').textContent = stats.completed_calls ?? 0;
-            $('#stat-failed').textContent = stats.failed_calls ?? 0;
-            const avg = stats.avg_duration_seconds;
-            if (avg != null && Number(avg) > 0) {
-                $('#stat-avg-duration').textContent = formatDuration(Math.round(avg));
-                $('#stat-avg-note').textContent = 'Based on completed calls';
+            $('#total-sessions').textContent = stats.total_sessions || 0;
+            $('#active-sessions').textContent = stats.active_sessions || 0;
+            $('#phone-count').textContent = stats.phone_numbers || 0;
+            $('#month-cost').textContent = '$' + (stats.month_cost || 0).toFixed(2);
+
+            const sessions = await API.getSessions(0, 5);
+            const sessionsList = $('#recent-sessions');
+            if (sessions.length === 0) {
+                sessionsList.innerHTML = '<p class="empty-state">No sessions yet. <a href="#" data-page="sessions">Create one now</a></p>';
             } else {
-                $('#stat-avg-duration').textContent = '0m 0s';
-                $('#stat-avg-note').textContent = 'No completed calls yet';
+                sessionsList.innerHTML = sessions.map(s => `
+                    <div class="session-card">
+                        <div class="session-card-header">
+                            <div class="session-name">${s.name}</div>
+                            <span class="session-status ${s.status}">${s.status}</span>
+                        </div>
+                        <p style="margin: 8px 0; font-size: 13px; color: var(--gray-600);">${s.description || 'No description'}</p>
+                        <div class="session-meta">
+                            <span>📞 ${s.target_phone_number || 'No target'}</span>
+                            <span>⏰ ${new Date(s.created_at).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                `).join('');
             }
-        } catch {
-            $('#stat-total').textContent = '0';
-            $('#stat-active').textContent = '0';
-            $('#stat-completed').textContent = '0';
-            $('#stat-failed').textContent = '0';
-            $('#stat-avg-duration').textContent = '0m 0s';
-            $('#stat-avg-note').textContent = 'Waiting for call data';
-        }
-
-        // Recent calls
-        try {
-            const calls = await API.getCalls(0, 5);
-            const tbody = $('#dashboard-recent-calls');
-            if (!calls || calls.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No calls yet</td></tr>';
-                return;
-            }
-            tbody.innerHTML = calls.map((c) => `
-                <tr>
-                    <td>${escapeHtml(c.to_number)}</td>
-                    <td>${escapeHtml(c.from_number)}</td>
-                    <td>${statusBadge(c.status)}</td>
-                    <td>${formatDuration(c.duration_seconds)}</td>
-                    <td>${formatDate(c.created_at)}</td>
-                </tr>
-            `).join('');
-        } catch {
-            $('#dashboard-recent-calls').innerHTML = '<tr><td colspan="5" class="empty-state">No calls yet</td></tr>';
-        }
-    }
-
-    // =====================
-    // Calls
-    // =====================
-    async function loadCalls() {
-        try {
-            const calls = await API.getCalls(0, 50);
-            const tbody = $('#calls-table-body');
-            if (!calls || calls.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No calls yet. Click "+ New Call" to start one.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = calls.map((c) => `
-                <tr>
-                    <td>${escapeHtml(c.to_number)}</td>
-                    <td>${escapeHtml(c.from_number)}</td>
-                    <td>${statusBadge(c.status)}</td>
-                    <td>${formatDuration(c.duration_seconds)}</td>
-                    <td>${formatDate(c.created_at)}</td>
-                </tr>
-            `).join('');
-        } catch {
-            $('#calls-table-body').innerHTML = '<tr><td colspan="5" class="empty-state">No calls yet</td></tr>';
-        }
-
-        // Populate prompt dropdown for call form
-        try {
-            const prompts = await API.getPrompts();
-            const select = $('#call-prompt');
-            select.innerHTML = '<option value="">-- No prompt --</option>';
-            if (prompts) {
-                prompts.forEach((p) => {
-                    select.innerHTML += `<option value="${p.id}">${escapeHtml(p.name)}</option>`;
-                });
-            }
-        } catch {
-            // Ignore
-        }
-    }
-
-    // New Call modal
-    $('#new-call-btn').addEventListener('click', () => {
-        $('#new-call-modal').classList.remove('hidden');
-    });
-
-    setupModalClose('#new-call-modal');
-
-    $('#new-call-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const stopLoading = startButtonLoading(e.submitter || $('#new-call-form button[type="submit"]'), 'Starting...');
-        const errorEl = $('#call-error');
-        errorEl.textContent = '';
-        try {
-            await API.initiateCall(
-                $('#call-to').value,
-                $('#call-from').value,
-                $('#call-prompt').value
-            );
-            $('#new-call-modal').classList.add('hidden');
-            $('#new-call-form').reset();
-            loadCalls();
         } catch (err) {
-            errorEl.textContent = err.message;
-        } finally {
-            stopLoading();
-        }
-    });
-
-    // =====================
-    // Contacts
-    // =====================
-    let contactsCache = [];
-
-    async function loadContactsPage() {
-        try {
-            const contacts = await API.getContacts();
-            contactsCache = contacts || [];
-            const tbody = $('#contacts-table-body');
-            if (contactsCache.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No contacts yet. Add your first one.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = contactsCache.map((c) => `
-                <tr>
-                    <td>${escapeHtml(c.full_name)}</td>
-                    <td>${escapeHtml(c.phone_number)}</td>
-                    <td>${escapeHtml(c.email || '-')}</td>
-                    <td>${renderTags(c.tags || [])}</td>
-                    <td>${formatDate(c.created_at)}</td>
-                    <td>
-                        <button class="btn-icon edit-contact-btn" title="Edit" data-id="${c.id}">✏️</button>
-                        <button class="btn-icon delete-contact-btn" title="Delete" data-id="${c.id}">🗑️</button>
-                    </td>
-                </tr>
-            `).join('');
-        } catch {
-            $('#contacts-table-body').innerHTML = '<tr><td colspan="6" class="empty-state">Failed to load contacts.</td></tr>';
+            console.error('Dashboard load error:', err);
         }
     }
 
-    $('#new-contact-btn').addEventListener('click', () => {
-        $('#contact-modal-title').textContent = 'Add Contact';
-        $('#contact-edit-id').value = '';
-        $('#contact-form').reset();
-        $('#contact-modal').classList.remove('hidden');
-    });
-
-    setupModalClose('#contact-modal');
-
-    $('#contact-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const stopLoading = startButtonLoading(e.submitter || $('#contact-form button[type="submit"]'), 'Saving...');
-        const errorEl = $('#contact-error');
-        errorEl.textContent = '';
-        const editId = $('#contact-edit-id').value;
-        const payload = {
-            full_name: $('#contact-name').value,
-            phone_number: $('#contact-phone').value,
-            email: $('#contact-email').value || null,
-            notes: $('#contact-notes').value || null,
-            tags: ($('#contact-tags').value || '')
-                .split(',')
-                .map((t) => t.trim())
-                .filter(Boolean),
-        };
-        try {
-            if (editId) {
-                await API.updateContact(editId, payload);
-            } else {
-                await API.createContact(payload);
-            }
-            $('#contact-modal').classList.add('hidden');
-            loadContactsPage();
-        } catch (err) {
-            errorEl.textContent = err.message;
-        } finally {
-            stopLoading();
-        }
-    });
-
-    $('#contacts-table-body').addEventListener('click', async (e) => {
-        const editBtn = e.target.closest('.edit-contact-btn');
-        if (editBtn) {
-            const id = parseInt(editBtn.dataset.id, 10);
-            const contact = contactsCache.find((c) => c.id === id);
-            if (!contact) return;
-            $('#contact-modal-title').textContent = 'Edit Contact';
-            $('#contact-edit-id').value = String(contact.id);
-            $('#contact-name').value = contact.full_name || '';
-            $('#contact-phone').value = contact.phone_number || '';
-            $('#contact-email').value = contact.email || '';
-            $('#contact-notes').value = contact.notes || '';
-            $('#contact-tags').value = (contact.tags || []).join(', ');
-            $('#contact-modal').classList.remove('hidden');
-            return;
-        }
-
-        const deleteBtn = e.target.closest('.delete-contact-btn');
-        if (deleteBtn) {
-            const id = parseInt(deleteBtn.dataset.id, 10);
-            if (!confirm('Delete this contact?')) return;
-            try {
-                await API.deleteContact(id);
-                loadContactsPage();
-            } catch (err) {
-                alert('Failed to delete contact: ' + err.message);
-            }
-        }
-    });
-
     // =====================
-    // AI Config: Prompts
+    // MARKETPLACE PAGE
     // =====================
-    let promptsCache = [];
+    async function loadMarketplace() {
+        const areaCodeFilter = $('#area-code-filter');
+        const countryFilter = $('#country-filter');
+        const searchBtn = $('#search-numbers-btn');
 
-    async function loadPrompts() {
-        try {
-            const prompts = await API.getPrompts();
-            promptsCache = prompts || [];
-            const tbody = $('#prompts-table-body');
-            if (promptsCache.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No prompts yet</td></tr>';
-                return;
-            }
-            tbody.innerHTML = promptsCache.map((p) => `
-                <tr>
-                    <td>${escapeHtml(p.name)}</td>
-                    <td>v${p.version}</td>
-                    <td>${p.is_active ? '✅' : '❌'}</td>
-                    <td>${formatDate(p.created_at)}</td>
-                    <td>
-                        <button class="btn-icon edit-prompt-btn" title="Edit" data-id="${p.id}">✏️</button>
-                        <button class="btn-icon delete-prompt-btn" title="Delete" data-id="${p.id}">🗑️</button>
-                    </td>
-                </tr>
-            `).join('');
-        } catch {
-            $('#prompts-table-body').innerHTML = '<tr><td colspan="5" class="empty-state">No prompts yet</td></tr>';
-        }
-    }
-
-    // Delegated event listeners for prompt actions
-    $('#prompts-table-body').addEventListener('click', (e) => {
-        const editBtn = e.target.closest('.edit-prompt-btn');
-        if (editBtn) {
-            const id = parseInt(editBtn.dataset.id, 10);
-            const prompt = promptsCache.find((p) => p.id === id);
-            if (prompt) {
-                $('#prompt-modal-title').textContent = 'Edit Prompt';
-                $('#prompt-edit-id').value = prompt.id;
-                $('#prompt-name').value = prompt.name;
-                $('#prompt-content').value = prompt.content;
-                $('#prompt-persona').value = prompt.persona_id || '';
-                $('#prompt-modal').classList.remove('hidden');
-            }
-            return;
-        }
-        const deleteBtn = e.target.closest('.delete-prompt-btn');
-        if (deleteBtn) {
-            const id = parseInt(deleteBtn.dataset.id, 10);
-            if (confirm('Delete this prompt?')) {
-                API.deletePrompt(id).then(() => loadPrompts());
-            }
-        }
-    });
-
-    $('#new-prompt-btn').addEventListener('click', () => {
-        $('#prompt-modal-title').textContent = 'Create Prompt';
-        $('#prompt-edit-id').value = '';
-        $('#prompt-form').reset();
-        $('#prompt-modal').classList.remove('hidden');
-    });
-
-    setupModalClose('#prompt-modal');
-
-    $('#prompt-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const stopLoading = startButtonLoading(e.submitter || $('#prompt-form button[type="submit"]'), 'Saving...');
-        const errorEl = $('#prompt-error');
-        errorEl.textContent = '';
-        const editId = $('#prompt-edit-id').value;
-        try {
-            if (editId) {
-                await API.updatePrompt(editId, {
-                    name: $('#prompt-name').value,
-                    content: $('#prompt-content').value,
-                    persona_id: $('#prompt-persona').value ? parseInt($('#prompt-persona').value, 10) : null,
-                });
-            } else {
-                await API.createPrompt(
-                    $('#prompt-name').value,
-                    $('#prompt-content').value,
-                    $('#prompt-persona').value
-                );
-            }
-            $('#prompt-modal').classList.add('hidden');
-            loadPrompts();
-        } catch (err) {
-            errorEl.textContent = err.message;
-        } finally {
-            stopLoading();
-        }
-    });
-
-    // =====================
-    // AI Config: Personas
-    // =====================
-    let personasCache = [];
-
-    async function loadPersonas() {
-        try {
-            const personas = await API.getPersonas();
-            personasCache = personas || [];
-            const tbody = $('#personas-table-body');
-            if (personasCache.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No personas yet</td></tr>';
-                return;
-            }
-            tbody.innerHTML = personasCache.map((p) => `
-                <tr>
-                    <td>${escapeHtml(p.name)}</td>
-                    <td>${escapeHtml(p.tone)}</td>
-                    <td>${escapeHtml(p.description || '-')}</td>
-                    <td>${formatDate(p.created_at)}</td>
-                    <td>
-                        <button class="btn-icon edit-persona-btn" title="Edit" data-id="${p.id}">✏️</button>
-                        <button class="btn-icon delete-persona-btn" title="Delete" data-id="${p.id}">🗑️</button>
-                    </td>
-                </tr>
-            `).join('');
-
-            // Update persona dropdowns
-            const select = $('#prompt-persona');
-            select.innerHTML = '<option value="">-- None --</option>';
-            personasCache.forEach((p) => {
-                select.innerHTML += `<option value="${p.id}">${escapeHtml(p.name)}</option>`;
-            });
-        } catch {
-            $('#personas-table-body').innerHTML = '<tr><td colspan="5" class="empty-state">No personas yet</td></tr>';
-        }
-    }
-
-    // Delegated event listeners for persona actions
-    $('#personas-table-body').addEventListener('click', (e) => {
-        const editBtn = e.target.closest('.edit-persona-btn');
-        if (editBtn) {
-            const id = parseInt(editBtn.dataset.id, 10);
-            const persona = personasCache.find((p) => p.id === id);
-            if (persona) {
-                $('#persona-modal-title').textContent = 'Edit Persona';
-                $('#persona-edit-id').value = persona.id;
-                $('#persona-name').value = persona.name;
-                $('#persona-description').value = persona.description || '';
-                $('#persona-tone').value = persona.tone;
-                $('#persona-modal').classList.remove('hidden');
-            }
-            return;
-        }
-        const deleteBtn = e.target.closest('.delete-persona-btn');
-        if (deleteBtn) {
-            const id = parseInt(deleteBtn.dataset.id, 10);
-            if (confirm('Delete this persona?')) {
-                API.deletePersona(id).then(() => loadPersonas());
-            }
-        }
-    });
-
-    $('#new-persona-btn').addEventListener('click', () => {
-        $('#persona-modal-title').textContent = 'Create Persona';
-        $('#persona-edit-id').value = '';
-        $('#persona-form').reset();
-        $('#persona-modal').classList.remove('hidden');
-    });
-
-    setupModalClose('#persona-modal');
-
-    $('#persona-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const stopLoading = startButtonLoading(e.submitter || $('#persona-form button[type="submit"]'), 'Saving...');
-        const errorEl = $('#persona-error');
-        errorEl.textContent = '';
-        const editId = $('#persona-edit-id').value;
-        try {
-            if (editId) {
-                await API.updatePersona(editId, {
-                    name: $('#persona-name').value,
-                    description: $('#persona-description').value,
-                    tone: $('#persona-tone').value,
-                });
-            } else {
-                await API.createPersona(
-                    $('#persona-name').value,
-                    $('#persona-description').value,
-                    $('#persona-tone').value
-                );
-            }
-            $('#persona-modal').classList.add('hidden');
-            loadPersonas();
-        } catch (err) {
-            errorEl.textContent = err.message;
-        } finally {
-            stopLoading();
-        }
-    });
-
-    // =====================
-    // AI Config: Tabs
-    // =====================
-    $$('.tab-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            $$('.tab-btn').forEach((b) => b.classList.remove('active'));
-            $$('.tab-content').forEach((c) => c.classList.remove('active'));
-            btn.classList.add('active');
-            $(`#tab-${btn.dataset.tab}`).classList.add('active');
+        searchBtn.addEventListener('click', async () => {
+            const areaCode = areaCodeFilter.value;
+            const country = countryFilter.value;
+            await searchNumbers(areaCode, country);
         });
-    });
+    }
 
-    // =====================
-    // Scheduler
-    // =====================
-    async function loadScheduledCalls() {
+    async function searchNumbers(areaCode, country = 'US') {
         try {
-            const calls = await API.getScheduledCalls();
-            const tbody = $('#schedule-table-body');
-            if (!calls || calls.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No scheduled calls</td></tr>';
-                return;
+            const numbers = await API.searchAvailableNumbers(areaCode, country);
+            const list = $('#numbers-list');
+            
+            if (numbers.length === 0) {
+                list.innerHTML = '<p class="empty-state">No numbers found. Try a different search.</p>';
+            } else {
+                list.innerHTML = numbers.map(n => `
+                    <div class="number-card">
+                        <div class="number-header">
+                            <div class="number-display">${n.phone_number}</div>
+                            <div class="number-region">${n.region || n.area_code}</div>
+                        </div>
+                        <div class="number-features">
+                            ${(n.features || []).map(f => `<span class="feature-badge">${f}</span>`).join('')}
+                        </div>
+                        <div class="number-pricing">
+                            <div class="price-row">
+                                <span class="price-label">Setup Fee</span>
+                                <span class="price-value">$${n.setup_price_usd}</span>
+                            </div>
+                            <div class="price-row">
+                                <span class="price-label">Monthly</span>
+                                <span class="price-value">$${n.monthly_price_usd}</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-full" onclick="purchaseNumber('${n.phone_number}', ${n.setup_price_usd}, ${n.monthly_price_usd}, '${n.area_code}', '${(n.features || []).join(', ')}')">
+                            Buy Number
+                        </button>
+                    </div>
+                `).join('');
             }
-            tbody.innerHTML = calls.map((c) => `
-                <tr>
-                    <td>${escapeHtml(c.to_number)}</td>
-                    <td>${formatDate(c.scheduled_at)}</td>
-                    <td>${escapeHtml(c.recurrence_pattern || 'One-time')}</td>
-                    <td>${statusBadge(c.status)}</td>
-                    <td>
-                        <button class="btn btn-sm btn-primary execute-schedule-btn" data-id="${c.id}">▶ Run</button>
-                        <button class="btn-icon cancel-schedule-btn" title="Cancel" data-id="${c.id}">🗑️</button>
-                    </td>
-                </tr>
-            `).join('');
-        } catch {
-            $('#schedule-table-body').innerHTML = '<tr><td colspan="5" class="empty-state">No scheduled calls</td></tr>';
-        }
-
-        // Populate prompt dropdown
-        try {
-            const prompts = await API.getPrompts();
-            const select = $('#schedule-prompt');
-            select.innerHTML = '<option value="">-- No prompt --</option>';
-            if (prompts) {
-                prompts.forEach((p) => {
-                    select.innerHTML += `<option value="${p.id}">${escapeHtml(p.name)}</option>`;
-                });
-            }
-        } catch {
-            // Ignore
+        } catch (err) {
+            console.error('Search error:', err);
+            $('#numbers-list').innerHTML = '<p class="empty-state">Error loading numbers</p>';
         }
     }
 
-    $('#new-schedule-btn').addEventListener('click', () => {
-        $('#schedule-modal').classList.remove('hidden');
+    window.purchaseNumber = (phone, setup, monthly, area, features) => {
+        $('#purchase-phone').textContent = phone;
+        $('#purchase-area').textContent = area;
+        $('#purchase-features').textContent = features || 'Standard';
+        $('#purchase-setup').textContent = `$${setup}`;
+        $('#purchase-monthly').textContent = `$${monthly}`;
+        const total = setup + monthly;
+        $('#purchase-total').textContent = `$${total.toFixed(2)}`;
+        
+        window.pendingPurchase = { phone, setup, monthly };
+        openDrawer('buy-number');
+    };
+
+    $('#confirm-purchase-btn').addEventListener('click', async () => {
+        if (!window.pendingPurchase) return;
+        try {
+            await API.purchasePhoneNumber(
+                window.pendingPurchase.phone,
+                window.pendingPurchase.monthly,
+                window.pendingPurchase.setup
+            );
+            closeDrawer('buy-number');
+            alert('Number purchased successfully!');
+            await loadMarketplace();
+        } catch (err) {
+            alert('Purchase failed: ' + err.message);
+        }
     });
 
-    setupModalClose('#schedule-modal');
+    $('#cancel-purchase-btn').addEventListener('click', () => closeDrawer('buy-number'));
 
-    // Delegated event listeners for scheduler actions
-    $('#schedule-table-body').addEventListener('click', async (e) => {
-        const execBtn = e.target.closest('.execute-schedule-btn');
-        if (execBtn) {
-            const id = parseInt(execBtn.dataset.id, 10);
-            try {
-                await API.executeScheduledCall(id);
-                loadScheduledCalls();
-            } catch (err) {
-                alert('Failed to execute: ' + err.message);
+    // =====================
+    // SESSIONS PAGE
+    // =====================
+    async function loadSessions() {
+        try {
+            const sessions = await API.getSessions();
+            const list = $('#sessions-list');
+            
+            if (sessions.length === 0) {
+                list.innerHTML = '<p class="empty-state">No sessions created yet</p>';
+            } else {
+                list.innerHTML = sessions.map(s => `
+                    <div class="session-card">
+                        <div class="session-card-header">
+                            <div class="session-name">${s.name}</div>
+                            <span class="session-status ${s.status}">${s.status}</span>
+                        </div>
+                        <p style="margin: 8px 0; font-size: 13px; color: var(--gray-600);">${s.description || 'No description'}</p>
+                        <div class="session-meta">
+                            <span>📞 ${s.target_phone_number || 'No target'}</span>
+                            <span>⏰ ${new Date(s.created_at).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                `).join('');
             }
+        } catch (err) {
+            console.error('Sessions load error:', err);
+        }
+    }
+
+    $('#create-session-btn').addEventListener('click', () => openDrawer('session'));
+
+    $('#create-session-submit-btn').addEventListener('click', async () => {
+        try {
+            const name = $('#session-name').value;
+            const description = $('#session-description').value;
+            if (!name) {
+                alert('Please enter a session name');
+                return;
+            }
+
+            const sessionData = {
+                name,
+                description,
+                persona_id: $('#session-persona').value || null,
+                prompt_template_id: $('#session-prompt').value || null,
+                from_phone_number: $('#session-phone').value || null,
+            };
+
+            if ($('#session-enable-schedule').checked) {
+                sessionData.scheduled_at = $('#session-schedule-date').value;
+                sessionData.recurrence_pattern = $('#session-recurrence').value;
+                sessionData.recurrence_end_date = $('#session-recurrence-end').value;
+            }
+
+            await API.createSession(sessionData);
+            closeDrawer('session');
+            clearSessionForm();
+            await loadSessions();
+            alert('Session created successfully!');
+        } catch (err) {
+            alert('Error creating session: ' + err.message);
+        }
+    });
+
+    $('#cancel-session-btn').addEventListener('click', () => closeDrawer('session'));
+
+    $('#session-enable-schedule').addEventListener('change', (e) => {
+        document.getElementById('scheduling-section').classList.toggle('hidden', !e.target.checked);
+    });
+
+    function clearSessionForm() {
+        $('#session-name').value = '';
+        $('#session-description').value = '';
+        $('#session-persona').value = '';
+        $('#session-prompt').value = '';
+        $('#session-phone').value = '';
+        $('#session-enable-schedule').checked = false;
+        document.getElementById('scheduling-section').classList.add('hidden');
+    }
+
+    // =====================
+    // WALLET PAGE
+    // =====================
+    async function loadWallet() {
+        try {
+            const wallet = await API.getWalletBalance();
+            updateWalletDisplay(wallet);
+            
+            const transactions = await API.getWalletTransactions();
+            const list = $('#transactions-list');
+            
+            if (transactions.length === 0) {
+                list.innerHTML = '<p class="empty-state">No transactions yet</p>';
+            } else {
+                list.innerHTML = transactions.map(t => `
+                    <div class="transaction-row">
+                        <div class="transaction-info">
+                            <div class="transaction-type">${t.type}</div>
+                            <div class="transaction-desc">${t.description}</div>
+                        </div>
+                        <div class="transaction-amount ${t.type === 'credit' ? 'credit' : 'debit'}">
+                            ${t.type === 'credit' ? '+' : '-'}$${Math.abs(t.amount).toFixed(2)}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } catch (err) {
+            console.error('Wallet load error:', err);
+        }
+    }
+
+    $('#add-credits-btn').addEventListener('click', () => openDrawer('add-credits'));
+    $('#add-credits-drawer-btn').addEventListener('click', () => openDrawer('add-credits'));
+
+    $('#proceed-payment-btn').addEventListener('click', async () => {
+        const amount = parseFloat($('#credit-amount').value);
+        if (!amount || amount < 1) {
+            alert('Please enter a valid amount');
             return;
         }
-        const cancelBtn = e.target.closest('.cancel-schedule-btn');
-        if (cancelBtn) {
-            const id = parseInt(cancelBtn.dataset.id, 10);
-            if (confirm('Cancel this scheduled call?')) {
-                await API.cancelScheduledCall(id);
-                loadScheduledCalls();
-            }
-        }
-    });
-
-    $('#schedule-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const stopLoading = startButtonLoading(e.submitter || $('#schedule-form button[type="submit"]'), 'Scheduling...');
-        const errorEl = $('#schedule-error');
-        errorEl.textContent = '';
         try {
-            const scheduledAt = new Date($('#schedule-at').value).toISOString();
-            await API.createScheduledCall(
-                $('#schedule-to').value,
-                scheduledAt,
-                $('#schedule-recurrence').value,
-                $('#schedule-prompt').value
-            );
-            $('#schedule-modal').classList.add('hidden');
-            $('#schedule-form').reset();
-            loadScheduledCalls();
+            // In production, integrate with actual payment gateway
+            await API.addWalletCredit(amount, `Manual credit of $${amount}`);
+            closeDrawer('add-credits');
+            $('#credit-amount').value = '';
+            alert('Credits added successfully!');
+            await loadWallet();
         } catch (err) {
-            errorEl.textContent = err.message;
-        } finally {
-            stopLoading();
+            alert('Error adding credits: ' + err.message);
         }
     });
 
     // =====================
-    // Settings
+    // ANALYTICS PAGE
+    // =====================
+    async function loadAnalytics() {
+        // Placeholder for analytics
+    }
+
+    // =====================
+    // SETTINGS PAGE
     // =====================
     async function loadSettings() {
-        loadMarketplaceNumbers();
-        loadOwnedNumbers();
-
-        // Load profile
         try {
             const profile = await API.getProfile();
-            if (profile) {
-                $('#profile-name').value = profile.full_name || '';
-                $('#profile-phone').value = profile.phone_number || '';
-                $('#profile-timezone').value = profile.timezone || 'UTC';
-            }
-        } catch {
-            // No profile yet
-        }
+            $('#settings-email').value = localStorage.getItem('user_email') || '';
+            $('#settings-name').value = profile.full_name || '';
+            $('#settings-timezone').value = profile.timezone || 'UTC';
 
-        // Load API keys
-        loadApiKeys();
-    }
-
-    async function loadMarketplaceNumbers() {
-        const grid = $('#number-marketplace-grid');
-        const empty = $('#number-marketplace-empty');
-        try {
-            const numbers = await API.getMarketplaceNumbers();
-            if (!numbers || numbers.length === 0) {
-                grid.innerHTML = '';
-                empty.classList.remove('hidden');
-                return;
-            }
-            empty.classList.add('hidden');
-            grid.innerHTML = numbers.map((n) => `
-                <div class="number-card">
-                    <div class="number-card-phone">${escapeHtml(n.phone_number)}</div>
-                    <div class="number-card-price">$${Number(n.monthly_price_usd).toFixed(2)} / month</div>
-                    <button class="btn btn-primary btn-sm buy-number-btn" data-number="${escapeHtml(n.phone_number)}">Buy Number</button>
-                </div>
-            `).join('');
-        } catch {
-            grid.innerHTML = '<div class="empty-state">Failed to load marketplace numbers.</div>';
-            empty.classList.add('hidden');
-        }
-    }
-
-    async function loadOwnedNumbers() {
-        const tbody = $('#owned-numbers-table-body');
-        try {
-            const numbers = await API.getOwnedNumbers();
-            if (!numbers || numbers.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No numbers purchased yet.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = numbers.map((n) => `
-                <tr>
-                    <td>${escapeHtml(n.phone_number)}</td>
-                    <td>$${Number(n.monthly_price_usd).toFixed(2)} / month</td>
-                    <td><span class="badge badge-scheduled">${escapeHtml(n.status)}</span></td>
-                    <td>${formatDate(n.purchased_at)}</td>
-                </tr>
-            `).join('');
-        } catch {
-            tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Failed to load owned numbers.</td></tr>';
-        }
-    }
-
-    $('#number-marketplace-grid').addEventListener('click', async (e) => {
-        const buyBtn = e.target.closest('.buy-number-btn');
-        if (!buyBtn) return;
-        const stopLoading = startButtonLoading(buyBtn, 'Purchasing...');
-        try {
-            await API.purchaseNumber(buyBtn.dataset.number);
-            await loadMarketplaceNumbers();
-            await loadOwnedNumbers();
-        } catch (err) {
-            alert('Failed to purchase number: ' + err.message);
-        } finally {
-            stopLoading();
-        }
-    });
-
-    // Profile form
-    let profileExists = false;
-    $('#profile-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const stopLoading = startButtonLoading(e.submitter || $('#profile-form button[type="submit"]'), 'Updating...');
-        const errorEl = $('#profile-error');
-        const successEl = $('#profile-success');
-        errorEl.textContent = '';
-        successEl.classList.add('hidden');
-        try {
-            const name = $('#profile-name').value;
-            const phone = $('#profile-phone').value;
-            const tz = $('#profile-timezone').value;
-            if (profileExists) {
-                await API.updateProfile(name, phone, tz);
-            } else {
-                await API.createProfile(name, phone, tz);
-                profileExists = true;
-            }
-            successEl.textContent = 'Profile updated successfully';
-            successEl.classList.remove('hidden');
-        } catch (err) {
-            if (err.message.includes('already exists') || err.message.includes('409')) {
-                profileExists = true;
+            $('#save-settings-btn').addEventListener('click', async () => {
                 try {
-                    await API.updateProfile($('#profile-name').value, $('#profile-phone').value, $('#profile-timezone').value);
-                    successEl.textContent = 'Profile updated successfully';
-                    successEl.classList.remove('hidden');
-                } catch (err2) {
-                    errorEl.textContent = err2.message;
+                    await API.updateProfile(
+                        $('#settings-name').value,
+                        $('#settings-timezone').value
+                    );
+                    alert('Settings saved successfully!');
+                } catch (err) {
+                    alert('Error saving settings: ' + err.message);
                 }
-            } else {
-                errorEl.textContent = err.message;
-            }
-        } finally {
-            stopLoading();
-        }
-    });
-
-    // Check if profile exists only when user has a token.
-    (async () => {
-        if (!API.getToken()) {
-            profileExists = false;
-            return;
-        }
-        try {
-            await API.getProfile();
-            profileExists = true;
-        } catch {
-            profileExists = false;
-        }
-    })();
-
-    // API Keys
-    async function loadApiKeys() {
-        try {
-            const keys = await API.getApiKeys();
-            const tbody = $('#api-keys-table-body');
-            if (!keys || keys.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No API keys</td></tr>';
-                return;
-            }
-            tbody.innerHTML = keys.map((k) => `
-                <tr>
-                    <td>${escapeHtml(k.name)}</td>
-                    <td><code>${escapeHtml(k.key_prefix)}...</code></td>
-                    <td>${k.is_active ? '✅ Active' : '❌ Inactive'}</td>
-                    <td>${formatDate(k.created_at)}</td>
-                    <td><button class="btn-icon delete-api-key-btn" title="Delete" data-id="${k.id}">🗑️</button></td>
-                </tr>
-            `).join('');
-        } catch {
-            $('#api-keys-table-body').innerHTML = '<tr><td colspan="5" class="empty-state">No API keys</td></tr>';
-        }
-    }
-
-    // Delegated event listener for API key actions
-    $('#api-keys-table-body').addEventListener('click', async (e) => {
-        const deleteBtn = e.target.closest('.delete-api-key-btn');
-        if (deleteBtn) {
-            const id = parseInt(deleteBtn.dataset.id, 10);
-            if (confirm('Delete this API key?')) {
-                await API.deleteApiKey(id);
-                loadApiKeys();
-            }
-        }
-    });
-
-    $('#new-api-key-btn').addEventListener('click', () => {
-        $('#new-api-key-form-container').classList.remove('hidden');
-        $('#api-key-created').classList.add('hidden');
-    });
-
-    $('#cancel-api-key').addEventListener('click', () => {
-        $('#new-api-key-form-container').classList.add('hidden');
-    });
-
-    $('#api-key-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const stopLoading = startButtonLoading(e.submitter || $('#api-key-form button[type="submit"]'), 'Creating...');
-        try {
-            const result = await API.createApiKey($('#api-key-name').value);
-            $('#api-key-value').textContent = result.api_key;
-            $('#api-key-created').classList.remove('hidden');
-            $('#api-key-form').reset();
-            loadApiKeys();
+            });
         } catch (err) {
-            alert('Failed to create API key: ' + err.message);
-        } finally {
-            stopLoading();
+            console.error('Settings load error:', err);
         }
-    });
-
-    // =====================
-    // Modal helper
-    // =====================
-    function setupModalClose(modalSelector) {
-        const modal = $(modalSelector);
-        modal.querySelector('.modal-close').addEventListener('click', () => modal.classList.add('hidden'));
-        modal.querySelector('.modal-overlay').addEventListener('click', () => modal.classList.add('hidden'));
-        const cancelBtn = modal.querySelector('.modal-cancel');
-        if (cancelBtn) cancelBtn.addEventListener('click', () => modal.classList.add('hidden'));
     }
 
     // =====================
-    // Init
+    // INITIALIZATION
     // =====================
     checkAuth();
 });

@@ -1,35 +1,27 @@
 /**
- * API client for the AI Call Automator backend.
+ * API Client - Bookcall PRO
+ * Handles all communication with the backend API
  */
+
 const API = {
     BASE_URL: window.location.origin,
     authEventDispatched: false,
 
-    /**
-     * Get the stored auth token.
-     */
+    // ===== TOKEN MANAGEMENT =====
     getToken() {
         return localStorage.getItem('access_token');
     },
 
-    /**
-     * Store the auth token.
-     */
     setToken(token) {
         localStorage.setItem('access_token', token);
     },
 
-    /**
-     * Remove the stored auth token.
-     */
     clearToken() {
         localStorage.removeItem('access_token');
         this.authEventDispatched = false;
     },
 
-    /**
-     * Make an authenticated API request.
-     */
+    // ===== REQUEST HANDLER =====
     async request(method, path, body = null) {
         const headers = { 'Content-Type': 'application/json' };
         const token = this.getToken();
@@ -71,7 +63,7 @@ const API = {
         return data;
     },
 
-    // --- Auth ---
+    // ===== AUTHENTICATION =====
     async login(email, password) {
         const data = await this.request('POST', '/auth/login', { email, password });
         this.setToken(data.access_token);
@@ -90,24 +82,86 @@ const API = {
         }
     },
 
-    // --- Dashboard ---
+    // ===== DASHBOARD =====
     async getDashboardStats() {
         return this.request('GET', '/calls/dashboard');
     },
 
-    // --- Calls (Telnyx) ---
-    async getCalls(skip = 0, limit = 20) {
-        return this.request('GET', `/telnyx/calls?skip=${skip}&limit=${limit}`);
+    // ===== WALLET & BILLING =====
+    async getWalletBalance() {
+        const wallet = await this.request('GET', '/billing/wallet/balance');
+        return wallet.balance || 0;
     },
 
-    async initiateCall(toNumber, fromNumber, aiPromptId) {
-        const body = { to_number: toNumber };
-        if (fromNumber) body.from_number = fromNumber;
-        if (aiPromptId) body.ai_prompt_id = parseInt(aiPromptId, 10);
-        return this.request('POST', '/telnyx/calls', body);
+    async addWalletCredit(amount, description) {
+        return this.request('POST', '/billing/wallet/credit', {
+            amount,
+            description,
+        });
     },
 
-    // --- AI Config: Prompts ---
+    async getWalletTransactions(skip = 0, limit = 50) {
+        return this.request('GET', `/billing/wallet/transactions?skip=${skip}&limit=${limit}`);
+    },
+
+    // ===== NUMBER MARKETPLACE =====
+    async searchAvailableNumbers(areaCode = null, country = 'US') {
+        let url = `/telnyx/marketplace/numbers?country=${country}`;
+        if (areaCode) url += `&area_code=${areaCode}`;
+        return this.request('GET', url);
+    },
+
+    async getUserPhoneNumbers() {
+        return this.request('GET', '/telnyx/user-numbers');
+    },
+
+    async purchasePhoneNumber(phoneNumber, monthlyPrice, setupPrice) {
+        return this.request('POST', '/telnyx/purchase', {
+            phone_number: phoneNumber,
+            monthly_price_usd: monthlyPrice,
+            setup_price_usd: setupPrice,
+        });
+    },
+
+    async cancelPhoneNumber(numberId) {
+        return this.request('DELETE', `/telnyx/numbers/${numberId}`);
+    },
+
+    // ===== SESSIONS =====
+    async getSessions(skip = 0, limit = 20) {
+        return this.request('GET', `/ai-config/sessions?skip=${skip}&limit=${limit}`);
+    },
+
+    async getSession(sessionId) {
+        return this.request('GET', `/ai-config/sessions/${sessionId}`);
+    },
+
+    async createSession(data) {
+        return this.request('POST', '/ai-config/sessions', data);
+    },
+
+    async updateSession(sessionId, data) {
+        return this.request('PUT', `/ai-config/sessions/${sessionId}`, data);
+    },
+
+    async deleteSession(sessionId) {
+        return this.request('DELETE', `/ai-config/sessions/${sessionId}`);
+    },
+
+    // ===== AI PERSONAS =====
+    async getPersonas(skip = 0, limit = 50) {
+        return this.request('GET', `/ai-config/personas?skip=${skip}&limit=${limit}`);
+    },
+
+    async createPersona(name, description, tone) {
+        return this.request('POST', '/ai-config/personas', { name, description, tone });
+    },
+
+    async updatePersona(id, data) {
+        return this.request('PUT', `/ai-config/personas/${id}`, data);
+    },
+
+    // ===== PROMPTS =====
     async getPrompts(skip = 0, limit = 50) {
         return this.request('GET', `/ai-config/prompts?skip=${skip}&limit=${limit}`);
     },
@@ -122,28 +176,50 @@ const API = {
         return this.request('PUT', `/ai-config/prompts/${id}`, data);
     },
 
-    async deletePrompt(id) {
-        return this.request('DELETE', `/ai-config/prompts/${id}`);
+    // ===== TELNYX CONFIG =====
+    async getTelnyxConfig() {
+        return this.request('GET', '/telnyx/config');
     },
 
-    // --- AI Config: Personas ---
-    async getPersonas(skip = 0, limit = 50) {
-        return this.request('GET', `/ai-config/personas?skip=${skip}&limit=${limit}`);
+    async saveTelnyxConfig(apiKey, phoneNumber, webhookUrl) {
+        const body = { api_key: apiKey, phone_number: phoneNumber };
+        if (webhookUrl) body.webhook_url = webhookUrl;
+        return this.request('POST', '/telnyx/config', body);
     },
 
-    async createPersona(name, description, tone) {
-        return this.request('POST', '/ai-config/personas', { name, description, tone });
+    // ===== CALLS =====
+    async getCalls(skip = 0, limit = 20) {
+        return this.request('GET', `/telnyx/calls?skip=${skip}&limit=${limit}`);
     },
 
-    async updatePersona(id, data) {
-        return this.request('PUT', `/ai-config/personas/${id}`, data);
+    async initiateCall(toNumber, fromNumber, aiPromptId) {
+        const body = { to_number: toNumber };
+        if (fromNumber) body.from_number = fromNumber;
+        if (aiPromptId) body.ai_prompt_id = parseInt(aiPromptId, 10);
+        return this.request('POST', '/telnyx/calls', body);
     },
 
-    async deletePersona(id) {
-        return this.request('DELETE', `/ai-config/personas/${id}`);
+    // ===== USER PROFILE =====
+    async getProfile() {
+        return this.request('GET', '/users/profile');
     },
 
-    // --- Scheduler ---
+    async createProfile(fullName, phoneNumber, timezone) {
+        return this.request('POST', '/users/profile', {
+            full_name: fullName,
+            phone_number: phoneNumber,
+            timezone: timezone,
+        });
+    },
+
+    async updateProfile(fullName, timezone) {
+        return this.request('PUT', '/users/profile', {
+            full_name: fullName,
+            timezone: timezone,
+        });
+    },
+
+    // ===== SCHEDULER (LEGACY - INTEGRATED INTO SESSIONS NOW) =====
     async getScheduledCalls(skip = 0, limit = 50) {
         return this.request('GET', `/scheduler/calls?skip=${skip}&limit=${limit}`);
     },
@@ -157,91 +233,5 @@ const API = {
 
     async cancelScheduledCall(id) {
         return this.request('DELETE', `/scheduler/calls/${id}`);
-    },
-
-    async executeScheduledCall(id) {
-        return this.request('POST', `/scheduler/calls/${id}/execute`);
-    },
-
-    // --- Settings: Telnyx Config ---
-    async getTelnyxConfig() {
-        return this.request('GET', '/telnyx/config');
-    },
-
-    async saveTelnyxConfig(apiKey, phoneNumber, webhookUrl) {
-        const body = { api_key: apiKey, phone_number: phoneNumber };
-        if (webhookUrl) body.webhook_url = webhookUrl;
-        return this.request('POST', '/telnyx/config', body);
-    },
-
-    async updateTelnyxConfig(phoneNumber, webhookUrl) {
-        const body = {};
-        if (phoneNumber) body.phone_number = phoneNumber;
-        if (webhookUrl) body.webhook_url = webhookUrl;
-        return this.request('PUT', '/telnyx/config', body);
-    },
-
-    // --- Settings: Profile ---
-    async getProfile() {
-        return this.request('GET', '/users/profile');
-    },
-
-    async createProfile(fullName, phoneNumber, timezone) {
-        return this.request('POST', '/users/profile', {
-            full_name: fullName,
-            phone_number: phoneNumber,
-            timezone: timezone,
-        });
-    },
-
-    async updateProfile(fullName, phoneNumber, timezone) {
-        return this.request('PUT', '/users/profile', {
-            full_name: fullName,
-            phone_number: phoneNumber,
-            timezone: timezone,
-        });
-    },
-
-    // --- Settings: API Keys ---
-    async getApiKeys() {
-        return this.request('GET', '/users/api-keys');
-    },
-
-    async createApiKey(name) {
-        return this.request('POST', '/users/api-keys', { name });
-    },
-
-    async deleteApiKey(id) {
-        return this.request('DELETE', `/users/api-keys/${id}`);
-    },
-
-    // --- Number Marketplace ---
-    async getMarketplaceNumbers() {
-        return this.request('GET', '/users/numbers/marketplace');
-    },
-
-    async getOwnedNumbers() {
-        return this.request('GET', '/users/numbers');
-    },
-
-    async purchaseNumber(phoneNumber) {
-        return this.request('POST', '/users/numbers/purchase', { phone_number: phoneNumber });
-    },
-
-    // --- Contacts ---
-    async getContacts() {
-        return this.request('GET', '/users/contacts');
-    },
-
-    async createContact(data) {
-        return this.request('POST', '/users/contacts', data);
-    },
-
-    async updateContact(id, data) {
-        return this.request('PUT', `/users/contacts/${id}`, data);
-    },
-
-    async deleteContact(id) {
-        return this.request('DELETE', `/users/contacts/${id}`);
     },
 };

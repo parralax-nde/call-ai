@@ -6,6 +6,40 @@ from sqlalchemy.orm import Mapped, mapped_column
 from shared.database import Base
 
 
+class UserWallet(Base):
+    __tablename__ = "user_wallets"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, unique=True, index=True, nullable=False)
+    balance: Mapped[float] = mapped_column(Float, default=0.0)
+    currency: Mapped[str] = mapped_column(String(10), default="USD")
+    total_recharged: Mapped[float] = mapped_column(Float, default=0.0)
+    total_spent: Mapped[float] = mapped_column(Float, default=0.0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+
+class WalletTransaction(Base):
+    __tablename__ = "wallet_transactions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, index=True, nullable=False)
+    transaction_type: Mapped[str] = mapped_column(String(20), nullable=False)  # 'credit' or 'debit'
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    description: Mapped[str] = mapped_column(String(500), nullable=False)
+    reference_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    balance_after: Mapped[float] = mapped_column(Float, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+
+
 class UsageRecord(Base):
     __tablename__ = "usage_records"
 
