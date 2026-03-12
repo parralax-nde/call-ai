@@ -281,23 +281,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // =====================
     // AI Config: Prompts
     // =====================
+    let promptsCache = [];
+
     async function loadPrompts() {
         try {
             const prompts = await API.getPrompts();
+            promptsCache = prompts || [];
             const tbody = $('#prompts-table-body');
-            if (!prompts || prompts.length === 0) {
+            if (promptsCache.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No prompts yet</td></tr>';
                 return;
             }
-            tbody.innerHTML = prompts.map((p) => `
+            tbody.innerHTML = promptsCache.map((p) => `
                 <tr>
                     <td>${escapeHtml(p.name)}</td>
                     <td>v${p.version}</td>
                     <td>${p.is_active ? '✅' : '❌'}</td>
                     <td>${formatDate(p.created_at)}</td>
                     <td>
-                        <button class="btn-icon" title="Edit" onclick="window.editPrompt(${p.id}, '${escapeHtml(p.name).replace(/'/g, "\\'")}', \`${escapeHtml(p.content).replace(/`/g, '\\`')}\`, ${p.persona_id || "''"})">✏️</button>
-                        <button class="btn-icon" title="Delete" onclick="window.deletePrompt(${p.id})">🗑️</button>
+                        <button class="btn-icon edit-prompt-btn" title="Edit" data-id="${p.id}">✏️</button>
+                        <button class="btn-icon delete-prompt-btn" title="Delete" data-id="${p.id}">🗑️</button>
                     </td>
                 </tr>
             `).join('');
@@ -305,6 +308,31 @@ document.addEventListener('DOMContentLoaded', () => {
             $('#prompts-table-body').innerHTML = '<tr><td colspan="5" class="empty-state">No prompts yet</td></tr>';
         }
     }
+
+    // Delegated event listeners for prompt actions
+    $('#prompts-table-body').addEventListener('click', (e) => {
+        const editBtn = e.target.closest('.edit-prompt-btn');
+        if (editBtn) {
+            const id = parseInt(editBtn.dataset.id, 10);
+            const prompt = promptsCache.find((p) => p.id === id);
+            if (prompt) {
+                $('#prompt-modal-title').textContent = 'Edit Prompt';
+                $('#prompt-edit-id').value = prompt.id;
+                $('#prompt-name').value = prompt.name;
+                $('#prompt-content').value = prompt.content;
+                $('#prompt-persona').value = prompt.persona_id || '';
+                $('#prompt-modal').classList.remove('hidden');
+            }
+            return;
+        }
+        const deleteBtn = e.target.closest('.delete-prompt-btn');
+        if (deleteBtn) {
+            const id = parseInt(deleteBtn.dataset.id, 10);
+            if (confirm('Delete this prompt?')) {
+                API.deletePrompt(id).then(() => loadPrompts());
+            }
+        }
+    });
 
     $('#new-prompt-btn').addEventListener('click', () => {
         $('#prompt-modal-title').textContent = 'Create Prompt';
@@ -341,42 +369,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    window.editPrompt = (id, name, content, personaId) => {
-        $('#prompt-modal-title').textContent = 'Edit Prompt';
-        $('#prompt-edit-id').value = id;
-        $('#prompt-name').value = name;
-        $('#prompt-content').value = content;
-        $('#prompt-persona').value = personaId || '';
-        $('#prompt-modal').classList.remove('hidden');
-    };
-
-    window.deletePrompt = async (id) => {
-        if (confirm('Delete this prompt?')) {
-            await API.deletePrompt(id);
-            loadPrompts();
-        }
-    };
-
     // =====================
     // AI Config: Personas
     // =====================
+    let personasCache = [];
+
     async function loadPersonas() {
         try {
             const personas = await API.getPersonas();
+            personasCache = personas || [];
             const tbody = $('#personas-table-body');
-            if (!personas || personas.length === 0) {
+            if (personasCache.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No personas yet</td></tr>';
                 return;
             }
-            tbody.innerHTML = personas.map((p) => `
+            tbody.innerHTML = personasCache.map((p) => `
                 <tr>
                     <td>${escapeHtml(p.name)}</td>
                     <td>${escapeHtml(p.tone)}</td>
                     <td>${escapeHtml(p.description || '-')}</td>
                     <td>${formatDate(p.created_at)}</td>
                     <td>
-                        <button class="btn-icon" title="Edit" onclick="window.editPersona(${p.id}, '${escapeHtml(p.name).replace(/'/g, "\\'")}', '${escapeHtml(p.description || '').replace(/'/g, "\\'")}', '${escapeHtml(p.tone)}')">✏️</button>
-                        <button class="btn-icon" title="Delete" onclick="window.deletePersona(${p.id})">🗑️</button>
+                        <button class="btn-icon edit-persona-btn" title="Edit" data-id="${p.id}">✏️</button>
+                        <button class="btn-icon delete-persona-btn" title="Delete" data-id="${p.id}">🗑️</button>
                     </td>
                 </tr>
             `).join('');
@@ -384,13 +399,38 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update persona dropdowns
             const select = $('#prompt-persona');
             select.innerHTML = '<option value="">-- None --</option>';
-            personas.forEach((p) => {
+            personasCache.forEach((p) => {
                 select.innerHTML += `<option value="${p.id}">${escapeHtml(p.name)}</option>`;
             });
         } catch {
             $('#personas-table-body').innerHTML = '<tr><td colspan="5" class="empty-state">No personas yet</td></tr>';
         }
     }
+
+    // Delegated event listeners for persona actions
+    $('#personas-table-body').addEventListener('click', (e) => {
+        const editBtn = e.target.closest('.edit-persona-btn');
+        if (editBtn) {
+            const id = parseInt(editBtn.dataset.id, 10);
+            const persona = personasCache.find((p) => p.id === id);
+            if (persona) {
+                $('#persona-modal-title').textContent = 'Edit Persona';
+                $('#persona-edit-id').value = persona.id;
+                $('#persona-name').value = persona.name;
+                $('#persona-description').value = persona.description || '';
+                $('#persona-tone').value = persona.tone;
+                $('#persona-modal').classList.remove('hidden');
+            }
+            return;
+        }
+        const deleteBtn = e.target.closest('.delete-persona-btn');
+        if (deleteBtn) {
+            const id = parseInt(deleteBtn.dataset.id, 10);
+            if (confirm('Delete this persona?')) {
+                API.deletePersona(id).then(() => loadPersonas());
+            }
+        }
+    });
 
     $('#new-persona-btn').addEventListener('click', () => {
         $('#persona-modal-title').textContent = 'Create Persona';
@@ -427,22 +467,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    window.editPersona = (id, name, description, tone) => {
-        $('#persona-modal-title').textContent = 'Edit Persona';
-        $('#persona-edit-id').value = id;
-        $('#persona-name').value = name;
-        $('#persona-description').value = description;
-        $('#persona-tone').value = tone;
-        $('#persona-modal').classList.remove('hidden');
-    };
-
-    window.deletePersona = async (id) => {
-        if (confirm('Delete this persona?')) {
-            await API.deletePersona(id);
-            loadPersonas();
-        }
-    };
-
     // =====================
     // AI Config: Tabs
     // =====================
@@ -473,8 +497,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${escapeHtml(c.recurrence_pattern || 'One-time')}</td>
                     <td>${statusBadge(c.status)}</td>
                     <td>
-                        <button class="btn btn-sm btn-primary" onclick="window.executeScheduled(${c.id})">▶ Run</button>
-                        <button class="btn-icon" title="Cancel" onclick="window.cancelScheduled(${c.id})">🗑️</button>
+                        <button class="btn btn-sm btn-primary execute-schedule-btn" data-id="${c.id}">▶ Run</button>
+                        <button class="btn-icon cancel-schedule-btn" title="Cancel" data-id="${c.id}">🗑️</button>
                     </td>
                 </tr>
             `).join('');
@@ -503,6 +527,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupModalClose('#schedule-modal');
 
+    // Delegated event listeners for scheduler actions
+    $('#schedule-table-body').addEventListener('click', async (e) => {
+        const execBtn = e.target.closest('.execute-schedule-btn');
+        if (execBtn) {
+            const id = parseInt(execBtn.dataset.id, 10);
+            try {
+                await API.executeScheduledCall(id);
+                loadScheduledCalls();
+            } catch (err) {
+                alert('Failed to execute: ' + err.message);
+            }
+            return;
+        }
+        const cancelBtn = e.target.closest('.cancel-schedule-btn');
+        if (cancelBtn) {
+            const id = parseInt(cancelBtn.dataset.id, 10);
+            if (confirm('Cancel this scheduled call?')) {
+                await API.cancelScheduledCall(id);
+                loadScheduledCalls();
+            }
+        }
+    });
+
     $('#schedule-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const errorEl = $('#schedule-error');
@@ -522,22 +569,6 @@ document.addEventListener('DOMContentLoaded', () => {
             errorEl.textContent = err.message;
         }
     });
-
-    window.executeScheduled = async (id) => {
-        try {
-            await API.executeScheduledCall(id);
-            loadScheduledCalls();
-        } catch (err) {
-            alert('Failed to execute: ' + err.message);
-        }
-    };
-
-    window.cancelScheduled = async (id) => {
-        if (confirm('Cancel this scheduled call?')) {
-            await API.cancelScheduledCall(id);
-            loadScheduledCalls();
-        }
-    };
 
     // =====================
     // Settings
@@ -654,13 +685,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td><code>${escapeHtml(k.key_prefix)}...</code></td>
                     <td>${k.is_active ? '✅ Active' : '❌ Inactive'}</td>
                     <td>${formatDate(k.created_at)}</td>
-                    <td><button class="btn-icon" title="Delete" onclick="window.deleteApiKey(${k.id})">🗑️</button></td>
+                    <td><button class="btn-icon delete-api-key-btn" title="Delete" data-id="${k.id}">🗑️</button></td>
                 </tr>
             `).join('');
         } catch {
             $('#api-keys-table-body').innerHTML = '<tr><td colspan="5" class="empty-state">No API keys</td></tr>';
         }
     }
+
+    // Delegated event listener for API key actions
+    $('#api-keys-table-body').addEventListener('click', async (e) => {
+        const deleteBtn = e.target.closest('.delete-api-key-btn');
+        if (deleteBtn) {
+            const id = parseInt(deleteBtn.dataset.id, 10);
+            if (confirm('Delete this API key?')) {
+                await API.deleteApiKey(id);
+                loadApiKeys();
+            }
+        }
+    });
 
     $('#new-api-key-btn').addEventListener('click', () => {
         $('#new-api-key-form-container').classList.remove('hidden');
@@ -683,13 +726,6 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Failed to create API key: ' + err.message);
         }
     });
-
-    window.deleteApiKey = async (id) => {
-        if (confirm('Delete this API key?')) {
-            await API.deleteApiKey(id);
-            loadApiKeys();
-        }
-    };
 
     // =====================
     // Modal helper

@@ -45,7 +45,7 @@ const API = {
         if (response.status === 401) {
             this.clearToken();
             window.location.reload();
-            throw new Error('Session expired');
+            return;
         }
 
         if (response.status === 204) {

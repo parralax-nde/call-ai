@@ -21,6 +21,9 @@ venv/
 .coverage
 htmlcov/
 
+# Database files
+*.db
+
 # Node
 node_modules/
 
