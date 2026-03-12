@@ -58,7 +58,7 @@ class ApiKeyResponse(BaseModel):
 
 
 class ApiKeyCreatedResponse(ApiKeyResponse):
-    api_key: str
+    api_key: str = ""
 
 
 class AccountSettings(BaseModel):
