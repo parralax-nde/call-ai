@@ -18,6 +18,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentPage = 'dashboard';
 
+    // Date formatter — outputs "Mar 12, 2026" style
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
     // =====================
     // AUTH FUNCTIONS
     // =====================
@@ -248,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p style="margin: 8px 0; font-size: 13px; color: var(--gray-600);">${s.description || 'No description'}</p>
                         <div class="session-meta">
                             <span>📞 ${s.target_phone_number || 'No target'}</span>
-                            <span>⏰ ${new Date(s.created_at).toLocaleDateString()}</span>
+                            <span>⏰ ${formatDate(s.created_at)}</span>
                         </div>
                     </div>
                 `).join('');
@@ -302,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                             <div class="price-row">
                                 <span class="price-label">Purchased</span>
-                                <span class="price-value">${new Date(n.purchased_at).toLocaleDateString()}</span>
+                                <span class="price-value">${formatDate(n.purchased_at)}</span>
                             </div>
                         </div>
                         <button class="btn btn-danger btn-full" onclick="releaseNumber(${n.id}, '${n.phone_number}')">
@@ -410,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p style="margin: 8px 0; font-size: 13px; color: var(--gray-600);">${s.description || 'No description'}</p>
                         <div class="session-meta">
                             <span>📞 ${s.target_phone_number || 'No target'}</span>
-                            <span>⏰ ${new Date(s.created_at).toLocaleDateString()}</span>
+                            <span>⏰ ${formatDate(s.created_at)}</span>
                         </div>
                     </div>
                 `).join('');
@@ -420,7 +427,46 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    $('#create-session-btn').addEventListener('click', () => openDrawer('session'));
+    $('#create-session-btn').addEventListener('click', async () => {
+        await populateSessionPhoneSelect();
+        openDrawer('session');
+    });
+
+    async function populateSessionPhoneSelect() {
+        const phoneSelect = $('#session-phone');
+        phoneSelect.innerHTML = '<option value="">Select a number...</option>';
+        try {
+            const [numbers, sessions] = await Promise.all([
+                API.getUserPhoneNumbers(),
+                API.getSessions()
+            ]);
+            const attachedNumbers = new Set(
+                sessions.filter(s => s.from_phone_number).map(s => s.from_phone_number)
+            );
+            const available = numbers.filter(n => n.status === 'active' && !attachedNumbers.has(n.phone_number));
+            available.forEach(n => {
+                const opt = document.createElement('option');
+                opt.value = n.phone_number;
+                opt.textContent = n.phone_number;
+                phoneSelect.appendChild(opt);
+            });
+            const buyOpt = document.createElement('option');
+            buyOpt.value = '__buy_new__';
+            buyOpt.textContent = '＋ Buy a new number…';
+            phoneSelect.appendChild(buyOpt);
+        } catch (err) {
+            console.error('Error loading phone numbers:', err);
+        }
+    }
+
+    // Navigate to marketplace if user picks "Buy a new number"
+    $('#session-phone').addEventListener('change', (e) => {
+        if (e.target.value === '__buy_new__') {
+            closeDrawer('session');
+            navigateTo('marketplace');
+            e.target.value = '';
+        }
+    });
 
     $('#create-session-submit-btn').addEventListener('click', async () => {
         try {
@@ -435,7 +481,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 name,
                 description,
                 voice: $('#session-voice').value,
-                prompt_template_id: $('#session-prompt').value || null,
                 from_phone_number: $('#session-phone').value || null,
             };
 
@@ -465,7 +510,6 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#session-name').value = '';
         $('#session-description').value = '';
         $('#session-voice').value = 'Telnyx.Polly.Joanna';
-        $('#session-prompt').value = '';
         $('#session-phone').value = '';
         $('#session-enable-schedule').checked = false;
         document.getElementById('scheduling-section').classList.add('hidden');
